@@ -1,30 +1,28 @@
 use axum::{
-    body::{boxed, Full},
     http::{header, HeaderValue, StatusCode, Uri},
     response::{IntoResponse, Response},
     routing::{get, Router},
 };
 use rust_embed::RustEmbed;
-use std::net::SocketAddr;
+use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 
 #[tokio::main]
 async fn main() {
     // Server routes
     let app = Router::new()
-        .route("/api/hello", get(|| async { "Hello, world!" }))
+        .route("/ping", get(|| async { "pong" }))
         .route("/", get(index_handler))
         .route("/*path", get(static_handler))
         .layer(CorsLayer::new().allow_origin([
-            HeaderValue::from_static("http://localhost:3000"),
+            HeaderValue::from_static("http://localhost:4000"),
             HeaderValue::from_static("http://localhost:5173"),
         ]));
 
     // Start server
-    let address = SocketAddr::from(([0, 0, 0, 0], 3000));
-    println!("Listening on http://localhost:3000");
-    axum::Server::bind(&address)
-        .serve(app.into_make_service())
+    let listener = TcpListener::bind("0.0.0.0:4000").await.unwrap();
+    println!("Listening on {:?}", listener.local_addr());
+    axum::serve(listener, app.into_make_service())
         .await
         .unwrap();
 }
@@ -52,17 +50,10 @@ where
 
         match Assets::get(path.as_str()) {
             Some(content) => {
-                let body = boxed(Full::from(content.data));
                 let mime = mime_guess::from_path(path).first_or_octet_stream();
-                Response::builder()
-                    .header(header::CONTENT_TYPE, mime.as_ref())
-                    .body(body)
-                    .unwrap()
+                ([(header::CONTENT_TYPE, mime.as_ref())], content.data).into_response()
             }
-            None => Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .body(boxed(Full::from("404")))
-                .unwrap(),
+            None => (StatusCode::NOT_FOUND, "404 Not Found").into_response(),
         }
     }
 }
