@@ -13,10 +13,16 @@ export type SampleType = {
   name: string
 }
 
+export type People = {
+  id: number
+  name: string
+}
+
 export type OptionsData = {
   well: Well[]
   pump: Pump[]
   sample_type: SampleType[]
+  people: People[]
 }
 
 export type SampleSet = {

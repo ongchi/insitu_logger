@@ -16,7 +16,11 @@
     createSvelteTable,
     FlexRender,
   } from "$lib/components/ui/data-table/index.js";
-  import { sharedOptions, pgClient } from "$lib/shared-variables.svelte";
+  import {
+    sharedOptions,
+    pgClient,
+    selectedRow,
+  } from "$lib/shared-variables.svelte";
   import OptionSelector from "$lib/option-selector.svelte";
   import { toast } from "svelte-sonner";
   import { fetch_data } from "$lib/utils.js";
@@ -58,6 +62,11 @@
     onRowSelectionChange: (updater) => {
       if (typeof updater === "function") {
         rowSelection = updater(rowSelection);
+        let rows = table.getSelectedRowModel().rows;
+        selectedRow.pop();
+        if (rows.length > 0) {
+          selectedRow.push(rows[0].original);
+        }
       } else {
         rowSelection = updater;
       }

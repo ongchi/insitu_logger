@@ -4,7 +4,16 @@
   let {
     value = $bindable(),
     options,
-  }: { value: number; options: { id: number; name: string }[] } = $props();
+    disabled = false,
+    onValueChange,
+    allowDeselect = true,
+  }: {
+    value: number | null;
+    options: { id: number; name: string }[];
+    disabled?: boolean;
+    onValueChange?: (value: any) => void;
+    allowDeselect?: boolean;
+  } = $props();
   let label = $derived(
     (() => {
       return (
@@ -16,9 +25,15 @@
 
 <Select.Root
   type="single"
+  value={value?.toString()}
   onValueChange={(new_value: string) => {
     value = parseInt(new_value);
+    if (onValueChange) {
+      onValueChange(value);
+    }
   }}
+  {disabled}
+  {allowDeselect}
 >
   <Select.Trigger>
     <span id="option">{label}</span>

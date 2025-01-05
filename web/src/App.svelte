@@ -2,6 +2,7 @@
   import { ModeWatcher } from "mode-watcher";
   import "./app.css";
   import TaskTable from "./task-table/data-table.svelte";
+  import TaskInfo from "./task-info/task-info.svelte";
   import { columns } from "./task-table/columns.js";
   import { onMount } from "svelte";
   import { type TaskSummary } from "$lib/types.js";
@@ -24,6 +25,9 @@
     fetch_data("task_summary", "*", (data: any) => {
       task_summary_data = data;
     });
+    fetch_data("people", "id,name", (data: any) => {
+      sharedOptions.people = data;
+    });
   });
 </script>
 
@@ -31,4 +35,5 @@
 <main>
   <Toaster />
   <TaskTable data={task_summary_data} {columns} />
+  <TaskInfo />
 </main>

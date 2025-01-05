@@ -5,7 +5,10 @@ export const sharedOptions: OptionsData = $state({
   well: [],
   pump: [],
   sample_type: [],
+  people: [],
 })
+
+export const selectedRow: any[] = $state([])
 
 export const token = $state(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiZmllbGRfdXNlciJ9.o2y6ypM0xgYlXY8LsqEMuNkve-CBM4nP8pBvkGRzRk4'
