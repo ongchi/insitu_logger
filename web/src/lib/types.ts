@@ -40,3 +40,19 @@ export type TaskSummary = {
   pump_id: number
   sampling_time: Date | null
 }
+
+export type TaskInfo = {
+  id: number
+  task_id: number
+  calibration: string
+  purging_time: string
+  water_level: number
+  pump_id: number
+  pump_depth: number
+  pump_freq: number
+  pump_rate: number
+  hose_setup: string
+  sampling_time: string
+  sample_wt_radium: number
+  comment: string
+}

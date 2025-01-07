@@ -1,4 +1,5 @@
 <script lang="ts" generics="TData, TValue">
+  import { type TaskSummary } from "$lib/types.ts";
   import { ChevronLeft, ChevronRight, Plus } from "lucide-svelte";
   import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
   import { Input } from "$lib/components/ui/input/index.js";
@@ -19,7 +20,7 @@
   import {
     sharedOptions,
     pgClient,
-    selectedRow,
+    selectedTask,
   } from "$lib/shared-variables.svelte";
   import OptionSelector from "$lib/option-selector.svelte";
   import { toast } from "svelte-sonner";
@@ -63,9 +64,9 @@
       if (typeof updater === "function") {
         rowSelection = updater(rowSelection);
         let rows = table.getSelectedRowModel().rows;
-        selectedRow.pop();
+        selectedTask.pop();
         if (rows.length > 0) {
-          selectedRow.push(rows[0].original);
+          selectedTask.push(rows[0].original as TaskSummary);
         }
       } else {
         rowSelection = updater;

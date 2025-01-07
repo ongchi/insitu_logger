@@ -1,4 +1,4 @@
-import { type OptionsData } from './types.ts'
+import { type OptionsData, type TaskSummary, type TaskInfo } from './types.ts'
 import { PostgrestClient } from '@supabase/postgrest-js'
 
 export const sharedOptions: OptionsData = $state({
@@ -8,7 +8,8 @@ export const sharedOptions: OptionsData = $state({
   people: [],
 })
 
-export const selectedRow: any[] = $state([])
+export const selectedTask: TaskSummary[] = $state([])
+export const selectedTaskInfo: TaskInfo[] = $state([])
 
 export const token = $state(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiZmllbGRfdXNlciJ9.o2y6ypM0xgYlXY8LsqEMuNkve-CBM4nP8pBvkGRzRk4'

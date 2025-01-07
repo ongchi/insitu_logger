@@ -2,7 +2,8 @@
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label/index.js";
   import {
-    selectedRow,
+    selectedTask,
+    selectedTaskInfo,
     pgClient,
     sharedOptions,
   } from "$lib/shared-variables.svelte";
@@ -12,26 +13,9 @@
   import TaskInfoEditMenu from "./edit-menu.svelte";
   import MultipleOptionSelector from "$lib/multiple-option-selector.svelte";
 
-  type TaskInfo = {
-    id: number;
-    task_id: number;
-    calibration: string;
-    purging_time: string;
-    water_level: number;
-    pump_id: number;
-    pump_depth: number;
-    pump_freq: number;
-    pump_rate: number;
-    hose_setup: string;
-    sampling_time: string;
-    sample_wt_radium: number;
-    comment: string;
-  };
-
-  let row = $derived(selectedRow.length > 0 ? selectedRow[0] : null);
+  let row = $derived(selectedTask.length > 0 ? selectedTask[0] : null);
   let taskInfoList: any[] = $state([]);
   let selectedInfoId = $state(0);
-  let selectedInfo: TaskInfo | null = $state(null);
   let selectedMinutedBy: string[] = $state([]);
   let selectedSampledBy: string[] = $state([]);
 
@@ -76,7 +60,7 @@
 
   function clearVars() {
     taskInfoList = [];
-    selectedInfo = null;
+    selectedTaskInfo.pop();
     selectedInfoId = 0;
     selectedMinutedBy = [];
     selectedSampledBy = [];
@@ -101,7 +85,8 @@
           if (error) {
             clearVars();
           } else {
-            selectedInfo = data[0];
+            selectedTaskInfo.pop();
+            selectedTaskInfo.push(data[0]);
             fetchPeople("task_minuted_by", selectedInfoId, (data) => {
               selectedMinutedBy = data.map((d: any) => d.people_id.toString());
             });
@@ -120,7 +105,7 @@
       return;
     }
     let { id, ...newTaskInfo } =
-      selectedInfo === null ? { task_id: row.id } : selectedInfo;
+      selectedTaskInfo.length === 0 ? { task_id: row.id } : selectedTaskInfo[0];
     pgClient
       .from("task_info")
       .insert(newTaskInfo)
@@ -152,14 +137,19 @@
 
   let updateTimeOut: number;
   function _updateTaskInfo(field: string, value: any) {
-    if (selectedInfo && (selectedInfo as any)[field] !== value) {
+    if (
+      selectedTaskInfo.length > 0 &&
+      (selectedTaskInfo[0] as any)[field] != value
+    ) {
       pgClient
         .from("task_info")
-        .update({ [field]: value === "" ? null : value })
+        .update({ [field]: value == "" ? null : value })
         .eq("id", selectedInfoId)
         .then(({ error }) => {
           if (error) {
             toast.error(error.message);
+          } else {
+            (selectedTaskInfo[0] as any)[field] = value;
           }
         });
     }
@@ -255,10 +245,10 @@
             <div class="grid w-full max-w-min max-w-36 items-center gap-2">
               <Label for="purging_time">Purging Time</Label>
               <Input
-                disabled={selectedInfo === null}
+                disabled={selectedTaskInfo.length === 0}
                 id="purging_time"
                 type="datetime-local"
-                value={selectedInfo?.purging_time}
+                value={selectedTaskInfo[0]?.purging_time}
                 onchange={(e) => {
                   updateTaskInfo(e, "purging_time");
                 }}
@@ -267,10 +257,10 @@
             <div class="grid w-full max-w-40 items-center gap-2">
               <Label for="calibration">Calibration</Label>
               <Input
-                disabled={selectedInfo === null}
+                disabled={selectedTaskInfo.length === 0}
                 id="calibration"
                 type="string"
-                value={selectedInfo?.calibration}
+                value={selectedTaskInfo[0]?.calibration}
                 onchange={(e) => {
                   updateTaskInfo(e, "calibration");
                 }}
@@ -281,9 +271,9 @@
             <div class="grid w-full max-w-min items-center gap-2">
               <Label>Pump</Label>
               <OptionSelector
-                disabled={selectedInfo === null}
+                disabled={selectedTaskInfo.length === 0}
                 options={sharedOptions.pump}
-                value={selectedInfo?.pump_id!}
+                value={selectedTaskInfo[0]?.pump_id!}
                 onValueChange={(value: any) => {
                   _updateTaskInfo("pump_id", value);
                 }}
@@ -292,10 +282,10 @@
             <div class="grid w-full max-w-32 items-center gap-2">
               <Label for="water_level">Water Level (m)</Label>
               <Input
-                disabled={selectedInfo === null}
+                disabled={selectedTaskInfo.length === 0}
                 id="water_level"
                 type="number"
-                value={selectedInfo?.water_level}
+                value={selectedTaskInfo[0]?.water_level}
                 onchange={(e) => {
                   updateTaskInfo(e, "water_level");
                 }}
@@ -304,10 +294,10 @@
             <div class="grid w-full max-w-32 items-center gap-2">
               <Label for="pump_rate">Pump Rate (L/min)</Label>
               <Input
-                disabled={selectedInfo === null}
+                disabled={selectedTaskInfo.length === 0}
                 id="pump_rate"
                 type="number"
-                value={selectedInfo?.pump_rate}
+                value={selectedTaskInfo[0]?.pump_rate}
                 onchange={(e) => {
                   updateTaskInfo(e, "pump_rate");
                 }}
@@ -318,10 +308,10 @@
             <div class="grid w-full max-w-32 items-center gap-2">
               <Label for="hose_setup">Hose Setup</Label>
               <Input
-                disabled={selectedInfo === null}
+                disabled={selectedTaskInfo.length === 0}
                 id="hose_setup"
                 type="string"
-                value={selectedInfo?.hose_setup}
+                value={selectedTaskInfo[0]?.hose_setup}
                 onchange={(e) => {
                   updateTaskInfo(e, "hose_setup");
                 }}
@@ -330,10 +320,10 @@
             <div class="grid w-full max-w-32 items-center gap-2">
               <Label for="pump_depth">Pump Depth (m)</Label>
               <Input
-                disabled={selectedInfo === null}
+                disabled={selectedTaskInfo.length === 0}
                 id="pump_depth"
                 type="number"
-                value={selectedInfo?.pump_depth}
+                value={selectedTaskInfo[0]?.pump_depth}
                 onchange={(e) => {
                   updateTaskInfo(e, "pump_depth");
                 }}
@@ -342,10 +332,10 @@
             <div class="grid w-full max-w-32 items-center gap-2">
               <Label for="pump_frequency">Pump Frequency</Label>
               <Input
-                disabled={selectedInfo === null}
+                disabled={selectedTaskInfo.length === 0}
                 id="pump_frequency"
                 type="number"
-                value={selectedInfo?.pump_freq}
+                value={selectedTaskInfo[0]?.pump_freq}
                 onchange={(e) => {
                   updateTaskInfo(e, "pump_freq");
                 }}
@@ -356,10 +346,10 @@
             <div class="grid w-full max-w-min items-center gap-2">
               <Label for="sampling_time">Sampling Time</Label>
               <Input
-                disabled={selectedInfo === null}
+                disabled={selectedTaskInfo.length === 0}
                 id="sampling_time"
                 type="datetime-local"
-                value={selectedInfo?.sampling_time}
+                value={selectedTaskInfo[0]?.sampling_time}
                 onchange={(e) => {
                   updateTaskInfo(e, "sampling_time");
                 }}
@@ -368,10 +358,10 @@
             <div class="grid w-full max-w-32 items-center gap-2">
               <Label for="ra_weight">Ra Sample wt. (kg)</Label>
               <Input
-                disabled={selectedInfo === null}
+                disabled={selectedTaskInfo.length === 0}
                 id="ra_weight"
                 type="number"
-                value={selectedInfo?.sample_wt_radium}
+                value={selectedTaskInfo[0]?.sample_wt_radium}
                 onchange={(e) => {
                   updateTaskInfo(e, "sample_wt_radium");
                 }}
@@ -384,10 +374,10 @@
             <Label>Comment</Label>
             <div class="flex flex-col items-center gap-2">
               <Editor
-                disabled={selectedInfo === null}
-                value={selectedInfo?.comment === null
+                disabled={selectedTaskInfo.length === 0}
+                value={selectedTaskInfo[0]?.comment === null
                   ? ""
-                  : selectedInfo?.comment}
+                  : selectedTaskInfo[0]?.comment}
                 onUpdate={(value: any) => {
                   _updateTaskInfo("comment", value);
                 }}
