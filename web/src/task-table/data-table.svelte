@@ -119,7 +119,7 @@
   });
 </script>
 
-<div class="w-full px-4">
+<div class="w-full px-2 py-2">
   <div class="flex items-center justify-between space-x-2 text-sm">
     <Popover.Root bind:open={popoverOpen}>
       <Popover.Trigger class={buttonVariants({ variant: "ghost" })}
@@ -186,7 +186,7 @@
       </Button>
     </div>
   </div>
-  <div class="border rounded-md">
+  <div class="border rounded-xl p-2">
     {#key data}
       <Table.Root>
         <Table.Header>

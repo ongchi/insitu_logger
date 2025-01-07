@@ -3,6 +3,7 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import type { Cell } from "@tanstack/table-core";
+  import type { TaskSummary } from "$lib/types";
 
   let {
     cell,
@@ -25,7 +26,8 @@
     {/snippet}
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
-    <DropdownMenu.Item onSelect={() => onDeleteRow(cell.row.original.id)}
+    <DropdownMenu.Item
+      onSelect={() => onDeleteRow((cell.row.original as TaskSummary).id)}
       >Delete</DropdownMenu.Item
     >
   </DropdownMenu.Content>
