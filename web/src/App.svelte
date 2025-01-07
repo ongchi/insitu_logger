@@ -1,10 +1,9 @@
 <script lang="ts">
   import { ModeWatcher } from "mode-watcher";
   import "./app.css";
-  import TaskTable from "./task-table/data-table.svelte";
+  import TaskTable from "./task-table/task-table.svelte";
   import TaskInfo from "./task-info/task-info.svelte";
   import SensorData from "./sensor-data/sensor-data.svelte";
-  import { columns } from "./task-table/columns.js";
   import { onMount } from "svelte";
   import { type TaskSummary } from "$lib/types.js";
   import { sharedOptions } from "$lib/shared-variables.svelte.ts";
@@ -35,7 +34,7 @@
 <ModeWatcher />
 <main>
   <Toaster />
-  <TaskTable data={task_summary_data} {columns} />
+  <TaskTable data={task_summary_data} />
   <TaskInfo />
   <SensorData />
 </main>

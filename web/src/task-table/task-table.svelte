@@ -1,4 +1,5 @@
-<script lang="ts" generics="TData, TValue">
+<script lang="ts">
+  import { columns } from "./task-table-columns.js";
   import { type TaskSummary } from "$lib/types.ts";
   import { ChevronLeft, ChevronRight, Plus } from "lucide-svelte";
   import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
@@ -7,7 +8,6 @@
   import * as Popover from "$lib/components/ui/popover/index.js";
   import * as Table from "$lib/components/ui/table/index.js";
   import {
-    type ColumnDef,
     type PaginationState,
     type RowSelectionState,
     getCoreRowModel,
@@ -25,14 +25,9 @@
   import OptionSelector from "$lib/option-selector.svelte";
   import { toast } from "svelte-sonner";
   import { fetch_data } from "$lib/utils.js";
-  import DataTableActions from "./data-table-actions.svelte";
+  import DataTableActions from "./table-actions.svelte";
 
-  type DataTableProps<TData, TValue> = {
-    columns: ColumnDef<TData, TValue>[];
-    data: TData[];
-  };
-
-  let { data, columns }: DataTableProps<TData, TValue> = $props();
+  let { data }: { data: TaskSummary[] } = $props();
 
   let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 5 });
   let rowSelection = $state<RowSelectionState>({});
