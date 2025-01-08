@@ -194,67 +194,32 @@
 <div class="w-full px-2 pb-2">
   <div class="border rounded-xl p-4">
     <div class="flex flex-col flex-wrap gap-2">
-      <div class="flex gap-2">
-        <div class="grid w-full max-w-min gap-2">
-          <Label
-            >Record ({taskInfoList
-              .map((info) => info.id)
-              .indexOf(selectedInfoId) + 1}/{taskInfoList.length})</Label
-          >
-          <div class="flex flex-row gap-2">
-            <OptionSelector
-              disabled={row === null}
-              bind:value={selectedInfoId}
-              options={taskInfoList}
-              allowDeselect={false}
-            ></OptionSelector>
-            <TaskInfoEditMenu
-              disabled={row === null}
-              onAddTaskInfo={addTaskInfo}
-              onDeleteTaskInfo={deleteTaskInfo}
-            />
-          </div>
-        </div>
-        <div class="grid w-full max-w-xs gap-2">
-          <Label>Minuted by</Label>
-          <MultipleOptionSelector
-            disabled={row === null}
-            bind:value={selectedMinutedBy}
-            options={sharedOptions.people}
-            addItem={(id: string) => addPeopleToList("task_minuted_by", id)}
-            deleteItem={(id: string) =>
-              removePeopleFromList("task_minuted_by", id)}
-          ></MultipleOptionSelector>
-        </div>
-        <div class="grid w-full max-w-xs gap-2">
-          <Label>Sampled by</Label>
-          <MultipleOptionSelector
-            disabled={row === null}
-            bind:value={selectedSampledBy}
-            options={sharedOptions.people}
-            addItem={(id: string) => addPeopleToList("task_sampled_by", id)}
-            deleteItem={(id: string) =>
-              removePeopleFromList("task_sampled_by", id)}
-          ></MultipleOptionSelector>
-        </div>
-      </div>
-
       <div class="flex flex-row flex-wrap gap-2">
         <div class="flex flex-col flex-wrap gap-2">
+          <!-- Line 1 -->
           <div class="flex flex-row flex-wrap gap-2">
-            <div class="grid w-full max-w-min max-w-36 items-center gap-2">
-              <Label for="purging_time">Purging Time</Label>
-              <Input
-                disabled={selectedTaskInfo.length === 0}
-                id="purging_time"
-                type="datetime-local"
-                value={selectedTaskInfo[0]?.purging_time}
-                onchange={(e) => {
-                  updateTaskInfo(e, "purging_time");
-                }}
-              ></Input>
+            <div class="grid min-w-min gap-2">
+              <Label
+                >Record ({taskInfoList
+                  .map((info) => info.id)
+                  .indexOf(selectedInfoId) + 1}/{taskInfoList.length})</Label
+              >
+              <div class="flex flex-row gap-2">
+                <OptionSelector
+                  disabled={row === null}
+                  bind:value={selectedInfoId}
+                  options={taskInfoList}
+                  allowDeselect={false}
+                ></OptionSelector>
+                <TaskInfoEditMenu
+                  disabled={row === null}
+                  onAddTaskInfo={addTaskInfo}
+                  onDeleteTaskInfo={deleteTaskInfo}
+                />
+              </div>
             </div>
-            <div class="grid w-full max-w-40 items-center gap-2">
+
+            <div class="grid min-w-40 items-center gap-2">
               <Label for="calibration">Calibration</Label>
               <Input
                 disabled={selectedTaskInfo.length === 0}
@@ -266,46 +231,20 @@
                 }}
               ></Input>
             </div>
-          </div>
-          <div class="flex flex-row flex-wrap gap-2">
-            <div class="grid w-full max-w-min items-center gap-2">
-              <Label>Pump</Label>
-              <OptionSelector
-                disabled={selectedTaskInfo.length === 0}
-                options={sharedOptions.pump}
-                value={selectedTaskInfo[0]?.pump_id!}
-                onValueChange={(value: any) => {
-                  _updateTaskInfo("pump_id", value);
-                }}
-              ></OptionSelector>
+
+            <div class="grid min-w-[12em] gap-2">
+              <Label>Minuted by</Label>
+              <MultipleOptionSelector
+                disabled={row === null}
+                bind:value={selectedMinutedBy}
+                options={sharedOptions.people}
+                addItem={(id: string) => addPeopleToList("task_minuted_by", id)}
+                deleteItem={(id: string) =>
+                  removePeopleFromList("task_minuted_by", id)}
+              ></MultipleOptionSelector>
             </div>
-            <div class="grid w-full max-w-32 items-center gap-2">
-              <Label for="water_level">Water Level (m)</Label>
-              <Input
-                disabled={selectedTaskInfo.length === 0}
-                id="water_level"
-                type="number"
-                value={selectedTaskInfo[0]?.water_level}
-                onchange={(e) => {
-                  updateTaskInfo(e, "water_level");
-                }}
-              ></Input>
-            </div>
-            <div class="grid w-full max-w-32 items-center gap-2">
-              <Label for="pump_rate">Pump Rate (L/min)</Label>
-              <Input
-                disabled={selectedTaskInfo.length === 0}
-                id="pump_rate"
-                type="number"
-                value={selectedTaskInfo[0]?.pump_rate}
-                onchange={(e) => {
-                  updateTaskInfo(e, "pump_rate");
-                }}
-              ></Input>
-            </div>
-          </div>
-          <div class="flex flex-row flex-wrap gap-2">
-            <div class="grid w-full max-w-32 items-center gap-2">
+
+            <div class="grid min-w-32 items-center gap-2">
               <Label for="hose_setup">Hose Setup</Label>
               <Input
                 disabled={selectedTaskInfo.length === 0}
@@ -317,7 +256,36 @@
                 }}
               ></Input>
             </div>
-            <div class="grid w-full max-w-32 items-center gap-2">
+
+            <div class="grid min-w-32 items-center gap-2">
+              <Label for="water_level">Water Level (m)</Label>
+              <Input
+                disabled={selectedTaskInfo.length === 0}
+                id="water_level"
+                type="number"
+                value={selectedTaskInfo[0]?.water_level}
+                onchange={(e) => {
+                  updateTaskInfo(e, "water_level");
+                }}
+              ></Input>
+            </div>
+          </div>
+
+          <!-- Line 2 -->
+          <div class="flex flex-row flex-wrap gap-2">
+            <div class="grid min-w-32 items-center gap-2">
+              <Label>Pump</Label>
+              <OptionSelector
+                disabled={selectedTaskInfo.length === 0}
+                options={sharedOptions.pump}
+                value={selectedTaskInfo[0]?.pump_id!}
+                onValueChange={(value: any) => {
+                  _updateTaskInfo("pump_id", value);
+                }}
+              ></OptionSelector>
+            </div>
+
+            <div class="grid min-w-32 items-center gap-2">
               <Label for="pump_depth">Pump Depth (m)</Label>
               <Input
                 disabled={selectedTaskInfo.length === 0}
@@ -329,7 +297,21 @@
                 }}
               ></Input>
             </div>
-            <div class="grid w-full max-w-32 items-center gap-2">
+
+            <div class="grid min-w-32 items-center gap-2">
+              <Label for="pump_rate">Pump Rate (L/min)</Label>
+              <Input
+                disabled={selectedTaskInfo.length === 0}
+                id="pump_rate"
+                type="number"
+                value={selectedTaskInfo[0]?.pump_rate}
+                onchange={(e) => {
+                  updateTaskInfo(e, "pump_rate");
+                }}
+              ></Input>
+            </div>
+
+            <div class="grid min-w-32 items-center gap-2">
               <Label for="pump_frequency">Pump Frequency</Label>
               <Input
                 disabled={selectedTaskInfo.length === 0}
@@ -342,8 +324,35 @@
               ></Input>
             </div>
           </div>
+
+          <!-- Line 3 -->
           <div class="flex flex-row flex-wrap gap-2">
-            <div class="grid w-full max-w-min items-center gap-2">
+            <div class="grid min-w-32 items-center gap-2">
+              <Label for="purging_time">Purging Time</Label>
+              <Input
+                disabled={selectedTaskInfo.length === 0}
+                id="purging_time"
+                type="datetime-local"
+                value={selectedTaskInfo[0]?.purging_time}
+                onchange={(e) => {
+                  updateTaskInfo(e, "purging_time");
+                }}
+              ></Input>
+            </div>
+
+            <div class="grid min-w-[12em] items-center gap-2">
+              <Label>Sampled by</Label>
+              <MultipleOptionSelector
+                disabled={row === null}
+                bind:value={selectedSampledBy}
+                options={sharedOptions.people}
+                addItem={(id: string) => addPeopleToList("task_sampled_by", id)}
+                deleteItem={(id: string) =>
+                  removePeopleFromList("task_sampled_by", id)}
+              ></MultipleOptionSelector>
+            </div>
+
+            <div class="grid min-w-32 items-center gap-2">
               <Label for="sampling_time">Sampling Time</Label>
               <Input
                 disabled={selectedTaskInfo.length === 0}
@@ -355,7 +364,8 @@
                 }}
               ></Input>
             </div>
-            <div class="grid w-full max-w-32 items-center gap-2">
+
+            <div class="grid min-w-32 items-center gap-2">
               <Label for="ra_weight">Ra Sample wt. (kg)</Label>
               <Input
                 disabled={selectedTaskInfo.length === 0}
@@ -369,21 +379,18 @@
             </div>
           </div>
         </div>
-        <div class="flex flex-col flex-wrap gap-2">
-          <div class="grid w-full max-w-sm items-center gap-2">
-            <Label>Comment</Label>
-            <div class="flex flex-col items-center gap-2">
-              <Editor
-                disabled={selectedTaskInfo.length === 0}
-                value={selectedTaskInfo[0]?.comment === null
-                  ? ""
-                  : selectedTaskInfo[0]?.comment}
-                onUpdate={(value: any) => {
-                  _updateTaskInfo("comment", value);
-                }}
-              />
-            </div>
-          </div>
+
+        <!-- Right Column -->
+        <div class="flex flex-col max-w-full gap-2">
+          <Editor
+            disabled={selectedTaskInfo.length === 0}
+            value={selectedTaskInfo[0]?.comment === null
+              ? ""
+              : selectedTaskInfo[0]?.comment}
+            onUpdate={(value: any) => {
+              _updateTaskInfo("comment", value);
+            }}
+          />
         </div>
       </div>
     </div>

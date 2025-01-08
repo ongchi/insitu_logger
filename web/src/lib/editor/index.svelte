@@ -32,7 +32,7 @@
       injectCSS: false,
       editorProps: {
         attributes: {
-          class: "p-2 w-full h-52 overflow-y-auto",
+          class: "p-2 w-full min-h-44 overflow-y-auto border round-md",
         },
       },
       onTransaction: () => {
@@ -64,46 +64,40 @@
   });
 </script>
 
-<div class="flex flex-col w-full">
-  <div class="flex w-full">
-    {#if editor}
-      <div class="flex flex-row w-full gap-2 pb-2">
-        <button
-          onclick={() =>
-            editor?.chain().focus().toggleHeading({ level: 1 }).run()}
-          class:active={editor.isActive("heading", { level: 1 })}
-        >
-          <Heading1 />
-        </button>
-        <button
-          onclick={() =>
-            editor?.chain().focus().toggleHeading({ level: 2 }).run()}
-          class:active={editor.isActive("heading", { level: 2 })}
-        >
-          <Heading2 />
-        </button>
-        <button
-          onclick={() => editor?.chain().focus().toggleBold().run()}
-          class:active={editor.isActive("bold")}><Bold /></button
-        >
-        <button
-          onclick={() => editor?.chain().focus().toggleItalic().run()}
-          class:active={editor.isActive("italic")}><Italic /></button
-        >
-        <button
-          onclick={() => editor?.chain().focus().toggleStrike().run()}
-          class:active={editor.isActive("strike")}><Strikethrough /></button
-        >
-        <button
-          onclick={() => editor?.chain().focus().toggleOrderedList().run()}
-          class:active={editor.isActive("orderedList")}><ListOrdered /></button
-        >
-        <button
-          onclick={() => editor?.chain().focus().toggleBulletList().run()}
-          class:active={editor.isActive("bulletList")}><List /></button
-        >
-      </div>
-    {/if}
+{#if editor}
+  <div class="flex flex-row w-full gap-2">
+    <button
+      onclick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
+      class:active={editor.isActive("heading", { level: 1 })}
+    >
+      <Heading1 />
+    </button>
+    <button
+      onclick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+      class:active={editor.isActive("heading", { level: 2 })}
+    >
+      <Heading2 />
+    </button>
+    <button
+      onclick={() => editor?.chain().focus().toggleBold().run()}
+      class:active={editor.isActive("bold")}><Bold /></button
+    >
+    <button
+      onclick={() => editor?.chain().focus().toggleItalic().run()}
+      class:active={editor.isActive("italic")}><Italic /></button
+    >
+    <button
+      onclick={() => editor?.chain().focus().toggleStrike().run()}
+      class:active={editor.isActive("strike")}><Strikethrough /></button
+    >
+    <button
+      onclick={() => editor?.chain().focus().toggleOrderedList().run()}
+      class:active={editor.isActive("orderedList")}><ListOrdered /></button
+    >
+    <button
+      onclick={() => editor?.chain().focus().toggleBulletList().run()}
+      class:active={editor.isActive("bulletList")}><List /></button
+    >
   </div>
-</div>
-<div bind:this={element} class="flex w-full border round-md"></div>
+{/if}
+<div bind:this={element} class="w-full"></div>

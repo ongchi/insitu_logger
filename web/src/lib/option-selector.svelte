@@ -16,9 +16,7 @@
   } = $props();
   let label = $derived(
     (() => {
-      return (
-        options.find((option) => option.id == value)?.name || "Select an option"
-      );
+      return options.find((option) => option.id == value)?.name || "---";
     })(),
   );
 </script>
