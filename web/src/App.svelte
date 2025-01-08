@@ -23,7 +23,12 @@
       sharedOptions.sample_type = data;
     });
     fetch_data("task_summary", "*", (data: any) => {
-      task_summary_data = data;
+      task_summary_data = data.map((d: any) => {
+        if (d.sample_set === null) {
+          d.sample_set = [];
+        }
+        return d;
+      });
     });
     fetch_data("people", "id,name", (data: any) => {
       sharedOptions.people = data;

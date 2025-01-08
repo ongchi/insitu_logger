@@ -4,14 +4,14 @@ import { Checkbox } from '$lib/components/ui/checkbox/index.js'
 import { formatDate } from '$lib/utils.js'
 import { sharedOptions, pgClient } from '$lib/shared-variables.svelte.ts'
 import EditableCell from './editable-cell.svelte'
-import SampleSetLabels from './sample-set-labels.svelte'
+import SampleSetEditor from './sample-set-editor.svelte'
 import { toast } from 'svelte-sonner'
-import { type TaskSummary } from '$lib/types.ts'
+import type { TaskSummary, SampleSet } from '$lib/types.ts'
 import type { PostgrestError } from '@supabase/postgrest-js'
 
 function handle_pg_error(error: PostgrestError | null) {
   if (error) {
-    console.log(error)
+    console.error(error)
     toast(error.message)
     return false
   } else {
@@ -96,8 +96,59 @@ export const columns: ColumnDef<TaskSummary>[] = [
     accessorKey: 'sample_set',
     header: 'Sample Set',
     cell: ({ row }) => {
-      return renderComponent(SampleSetLabels, {
-        sample_set: row.original.sample_set,
+      return renderComponent(SampleSetEditor, {
+        initialSet: row.original.sample_set,
+        onSave: async (newValue: SampleSet[]) => {
+
+          let addItem: SampleSet[] = []
+          // Items not in the original sample set
+          newValue.forEach((newItem) => {
+            let maybeAdd = row.original.sample_set.find((oldItem) => newItem.id == oldItem.id)
+            if (maybeAdd === undefined) addItem.push(newItem)
+          })
+          // Items in the original sample set with different qty
+          newValue.forEach((newItem) => {
+            let maybeUpdate = row.original.sample_set
+              .find((oldItem) => (newItem.id == oldItem.id) && (newItem.qty != oldItem.qty))
+            if ((newItem.qty > 0) && (maybeUpdate !== undefined)) addItem.push(newItem)
+          })
+
+          const { error: upsert_error } = await pgClient
+            .from('sample_set')
+            .upsert(
+              addItem.map((item) => {
+                return { task_id: row.original.id, sample_type_id: item.id, qty: item.qty }
+              }))
+
+          if (upsert_error) {
+            handle_pg_error(upsert_error)
+            return false
+          }
+
+          let deleteItem: SampleSet[] = []
+          // Items in the original sample set with qty = 0
+          newValue.forEach((newItem) => {
+            if (newItem.qty < 1) {
+              deleteItem.push(newItem)
+            }
+          })
+
+          const { error: delete_error } = await pgClient
+            .from('sample_set')
+            .delete()
+            .eq('task_id', row.original.id)
+            .in('sample_type_id', deleteItem.map((item) => item.id))
+
+          if (delete_error) {
+            handle_pg_error(delete_error)
+            return false
+          }
+
+          // if update success
+          row.original.sample_set = [...newValue.filter((item) => item.qty > 0)]
+
+          return true
+        }
       })
     },
   },
