@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label/index.js";
   import {
@@ -12,6 +13,8 @@
   import { toast } from "svelte-sonner";
   import TaskInfoEditMenu from "./edit-menu.svelte";
   import MultipleOptionSelector from "$lib/multiple-option-selector.svelte";
+  import { Printer } from "lucide-svelte";
+  import { get_name as get_sample_name } from "../task-table/sample-set-utils.ts";
 
   let row = $derived(selectedTask.length > 0 ? selectedTask[0] : null);
   let taskInfoList: any[] = $state([]);
@@ -363,6 +366,74 @@
                   updateTaskInfo(e, "sampling_time");
                 }}
               ></Input>
+            </div>
+
+            <div class="grid items-center gap-2">
+              <Label></Label>
+              <Button
+                disabled={row === null}
+                variant="ghost"
+                size="icon"
+                onclick={() => {
+                  pgClient
+                    .from("sample_set")
+                    .select("sample_type_id,qty")
+                    .order("sample_type_id", { ascending: true })
+                    .eq("task_id", selectedTaskInfo[0]?.task_id)
+                    .then(({ data, error }) => {
+                      if (error) {
+                        toast.error(error.message);
+                      } else {
+                        let labels = [["Serial", "Well", "DateTime", "Type"]];
+                        let serial = `＃${selectedTask[0].serial}`;
+                        let well = sharedOptions.well.find(
+                          (w) => w.id == selectedTask[0].well_id,
+                        )?.name as string;
+                        let datetime = new Date(
+                          selectedTaskInfo[0].sampling_time,
+                        );
+
+                        // Convert datetime to string with format YYYYMMDD HH:mm
+                        let datetime_str = `${datetime.getFullYear()}${(
+                          "0" +
+                          (datetime.getMonth() + 1)
+                        ).slice(-2)}${("0" + datetime.getDate()).slice(-2)} ${(
+                          "0" + datetime.getHours()
+                        ).slice(
+                          -2,
+                        )}:${("0" + datetime.getMinutes()).slice(-2)}`;
+
+                        data.forEach(
+                          (sample: { sample_type_id: number; qty: number }) => {
+                            let name = get_sample_name(sample.sample_type_id);
+                            if (sample.qty > 1) {
+                              for (let i = 1; i <= sample.qty; i++) {
+                                labels.push([
+                                  serial,
+                                  well,
+                                  datetime_str,
+                                  `${name} (${i})`,
+                                ]);
+                              }
+                            } else {
+                              labels.push([serial, well, datetime_str, name]);
+                            }
+                          },
+                        );
+
+                        let csvContent =
+                          "data:text/csv;charset=utf-8," +
+                          labels.map((row) => row.join(",")).join("\n");
+                        console.log(csvContent);
+                        let encodedUri = encodeURI(csvContent);
+                        let link = document.createElement("a");
+                        link.setAttribute("href", encodedUri);
+                        link.setAttribute("download", "tags.csv");
+                        link.click();
+                      }
+                    });
+                }}><Printer /></Button
+              >
             </div>
 
             <div class="grid min-w-32 items-center gap-2">
