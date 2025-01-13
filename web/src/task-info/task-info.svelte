@@ -385,7 +385,7 @@
                         toast.error(error.message);
                       } else {
                         let labels = [["Serial", "Well", "DateTime", "Type"]];
-                        let serial = `＃${selectedTask[0].serial}`;
+                        let serial = `#${selectedTask[0].serial}`;
                         let well = sharedOptions.well.find(
                           (w) => w.id == selectedTask[0].well_id,
                         )?.name as string;
@@ -430,6 +430,7 @@
                         link.setAttribute("href", encodedUri);
                         link.setAttribute("download", "tags.csv");
                         link.click();
+                        link.remove();
                       }
                     });
                 }}><Printer /></Button

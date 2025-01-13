@@ -44,7 +44,7 @@ export const setL = [
   { name: 'I-', qty: 2 },
   { name: 'Ra', qty: 1 },
   { name: 'Sr_Isotope', qty: 1 },
-  { name: 'SO4_1L', qty: 1 },
+  { name: 'SO4_5L', qty: 1 },
   { name: '真空瓶', qty: 1 },
   { name: '血清瓶_250mL', qty: 2 },
 ]
