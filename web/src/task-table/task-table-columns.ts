@@ -126,12 +126,24 @@ export const columns: ColumnDef<TaskSummary>[] = [
           }
 
           let deleteItem: SampleSet[] = []
-          // Items in the original sample set with qty = 0
-          newValue.forEach((newItem) => {
-            if (newItem.qty < 1) {
-              deleteItem.push(newItem)
-            }
-          })
+          if (newValue.length === 0) {
+            // Delete all items when newValue is empty
+            row.original.sample_set.forEach((oldItem) => {
+              deleteItem.push(oldItem)
+            })
+          } else {
+            // Items in the original sample set with qty = 0
+            newValue.forEach((newItem) => {
+              if (newItem.qty < 1) {
+                deleteItem.push(newItem)
+              }
+            })
+            // Items not in the original sample set
+            row.original.sample_set.forEach((oldItem) => {
+              let maybeDelete = newValue.find((newItem) => newItem.id == oldItem.id)
+              if (maybeDelete === undefined) deleteItem.push(oldItem)
+            })
+          }
 
           const { error: delete_error } = await pgClient
             .from('sample_set')

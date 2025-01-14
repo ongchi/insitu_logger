@@ -23,9 +23,8 @@ export const pgClient: PostgrestClient = $state(
 
 export const setS = [
   { name: 'Trace', qty: 1 },
-  { name: 'IC', qty: 2 },
+  { name: 'IC', qty: 1 },
   { name: 'DOC', qty: 2 },
-  { name: 'TM', qty: 1 },
   { name: 'ALK', qty: 1 },
   { name: 'HS-', qty: 2 },
   { name: 'I-', qty: 2 },
@@ -36,7 +35,6 @@ export const setL = [
   { name: 'Trace', qty: 1 },
   { name: 'IC', qty: 2 },
   { name: 'DOC', qty: 2 },
-  { name: 'TM', qty: 1 },
   { name: 'ALK', qty: 1 },
   { name: 'HO', qty: 3 },
   { name: 'DIC', qty: 4 },

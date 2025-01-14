@@ -20,17 +20,19 @@
   let isSaving = $state(false);
 
   async function handleSave() {
-    if (JSON.stringify(currentSet) !== JSON.stringify(initialSet)) {
-      let newSet = [...$state.snapshot(currentSet).sort((a, b) => a.id - b.id)];
-
+    let newSet = $state
+      .snapshot(currentSet)
+      .filter((item) => item.qty > 0)
+      .sort((a, b) => a.id - b.id);
+    if (JSON.stringify(newSet) !== JSON.stringify(initialSet)) {
       isSaving = true;
       const success = await onSave(newSet);
       isSaving = false;
 
       if (success) {
+        currentSet = [...newSet];
+        initialSet = [...newSet];
         isEditing = false;
-        currentSet = [...newSet.filter((item) => item.qty > 0)];
-        initialSet = [...currentSet];
       } else {
         currentSet = [...initialSet];
       }
