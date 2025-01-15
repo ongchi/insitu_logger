@@ -385,10 +385,12 @@
                         toast.error(error.message);
                       } else {
                         let labels = [["Serial", "Well", "DateTime", "Type"]];
-                        let serial = `#${selectedTask[0].serial}`;
-                        let well = sharedOptions.well.find(
-                          (w) => w.id == selectedTask[0].well_id,
-                        )?.name as string;
+                        let serial = `${selectedTask[0].serial}`;
+                        let well_depth = `${
+                          sharedOptions.well.find(
+                            (w) => w.id == selectedTask[0].well_id,
+                          )?.name as string
+                        }@${selectedTask[0].depth}`;
                         let datetime = new Date(
                           selectedTaskInfo[0].sampling_time,
                         );
@@ -410,13 +412,18 @@
                               for (let i = 1; i <= sample.qty; i++) {
                                 labels.push([
                                   serial,
-                                  well,
+                                  well_depth,
                                   datetime_str,
                                   `${name} (${i})`,
                                 ]);
                               }
                             } else {
-                              labels.push([serial, well, datetime_str, name]);
+                              labels.push([
+                                serial,
+                                well_depth,
+                                datetime_str,
+                                name,
+                              ]);
                             }
                           },
                         );
