@@ -43,24 +43,26 @@
     </Button>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
-    <DropdownMenu.Item
-      onclick={() => {
-        createSet(setS);
-      }}>小褔</DropdownMenu.Item
-    >
-    <DropdownMenu.Item
-      onclick={() => {
-        createSet(setL);
-      }}>大褔</DropdownMenu.Item
-    >
-    <DropdownMenu.Separator />
-    {#each dropdownOptions as option}
+    {#if currentSet.length == 0}
       <DropdownMenu.Item
         onclick={() => {
-          currentSet.push({ id: option.id, qty: 1 });
-        }}>{option.name}</DropdownMenu.Item
+          createSet(setS);
+        }}>小褔</DropdownMenu.Item
       >
-    {/each}
+      <DropdownMenu.Item
+        onclick={() => {
+          createSet(setL);
+        }}>大褔</DropdownMenu.Item
+      >
+    {:else}
+      {#each dropdownOptions as option}
+        <DropdownMenu.Item
+          onclick={() => {
+            currentSet.push({ id: option.id, qty: 1 });
+          }}>{option.name}</DropdownMenu.Item
+        >
+      {/each}
+    {/if}
   </DropdownMenu.Content>
 </DropdownMenu.Root>
 <Button
