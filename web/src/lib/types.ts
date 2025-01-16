@@ -37,7 +37,6 @@ export type TaskSummary = {
   well_id: number
   depth: number
   sample_set: Array<SampleSet>
-  pump_id: number
   sampling_time: Date | null
 }
 

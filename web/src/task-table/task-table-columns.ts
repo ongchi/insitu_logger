@@ -166,17 +166,6 @@ export const columns: ColumnDef<TaskSummary>[] = [
   },
 
   {
-    accessorKey: 'pump_id',
-    header: 'Pump',
-    cell: ({ row }) => {
-      const pumpId = row.original.pump_id
-      return pumpId
-        ? sharedOptions.pump.find((el) => el.id === pumpId)?.name
-        : 'N/A'
-    },
-  },
-
-  {
     accessorKey: 'sampling_time',
     header: 'Sampling Time',
     cell: ({ row }) => {
