@@ -431,7 +431,6 @@
                         let csvContent =
                           "data:text/csv;charset=utf-8," +
                           labels.map((row) => row.join(",")).join("\n");
-                        console.log(csvContent);
                         let encodedUri = encodeURI(csvContent);
                         let link = document.createElement("a");
                         link.setAttribute("href", encodedUri);
