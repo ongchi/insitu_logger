@@ -15,6 +15,8 @@
   import MultipleOptionSelector from "$lib/multiple-option-selector.svelte";
   import { Printer } from "lucide-svelte";
   import { get_name as get_sample_name } from "../task-table/sample-set-utils.ts";
+  import jsPDF from "jspdf";
+  import { NotoSansTC } from "$lib/NotoSansTC-Regular-normal.js";
 
   let row = $derived(selectedTask.length > 0 ? selectedTask[0] : null);
   let taskInfoList: any[] = $state([]);
@@ -189,6 +191,72 @@
       .then(({ error }) => {
         if (error) {
           toast.error(error.message);
+        }
+      });
+  }
+
+  function printTags() {
+    pgClient
+      .from("sample_set")
+      .select("sample_type_id,qty")
+      .order("sample_type_id", { ascending: true })
+      .eq("task_id", selectedTaskInfo[0]?.task_id)
+      .then(({ data, error }) => {
+        if (error) {
+          toast.error(error.message);
+        } else {
+          let serial = `#${selectedTask[0].serial}`;
+          let well_depth = `${
+            sharedOptions.well.find((w) => w.id == selectedTask[0].well_id)
+              ?.name as string
+          }@${selectedTask[0].depth}`;
+          let datetime = new Date(selectedTaskInfo[0].sampling_time);
+
+          // Convert datetime to string with format YYYYMMDD HH:mm
+          let datetime_str = `${datetime.getFullYear()}-${(
+            "0" +
+            (datetime.getMonth() + 1)
+          ).slice(-2)}-${("0" + datetime.getDate()).slice(-2)} ${(
+            "0" + datetime.getHours()
+          ).slice(-2)}:${("0" + datetime.getMinutes()).slice(-2)}`;
+
+          const doc = new jsPDF({
+            orientation: "landscape",
+            unit: "mm",
+            format: [42, 18],
+          });
+          doc.addFileToVFS("NotoSansTC-Regular-normal.ttf", NotoSansTC);
+          doc.addFont("NotoSansTC-Regular-normal.ttf", "NotoSansTC", "normal");
+          doc.setFont("NotoSansTC");
+          doc.setFontSize(10);
+
+          let pdfPages = 0;
+          data.forEach((sample: { sample_type_id: number; qty: number }) => {
+            let name = get_sample_name(sample.sample_type_id);
+            if (sample.qty > 1) {
+              for (let i = 1; i <= sample.qty; i++) {
+                if (pdfPages > 0) {
+                  doc.addPage([42, 18]);
+                }
+                doc.text(serial, 4, 5.5);
+                doc.text(well_depth, 4, 10.5);
+                doc.text(datetime_str, 4, 15.5);
+                doc.text(`${name} (${i})`, 22, 5.5);
+                pdfPages++;
+              }
+            } else {
+              if (pdfPages > 0) {
+                doc.addPage([42, 18]);
+              }
+              doc.text(serial, 4, 5.5);
+              doc.text(well_depth, 4, 10.5);
+              doc.text(datetime_str, 4, 15.5);
+              doc.text(name, 22, 5.5);
+              pdfPages++;
+            }
+          });
+
+          doc.output("dataurlnewwindow");
         }
       });
   }
@@ -374,72 +442,7 @@
                 disabled={row === null}
                 variant="ghost"
                 size="icon"
-                onclick={() => {
-                  pgClient
-                    .from("sample_set")
-                    .select("sample_type_id,qty")
-                    .order("sample_type_id", { ascending: true })
-                    .eq("task_id", selectedTaskInfo[0]?.task_id)
-                    .then(({ data, error }) => {
-                      if (error) {
-                        toast.error(error.message);
-                      } else {
-                        let labels = [["Serial", "Well", "DateTime", "Type"]];
-                        let serial = `${selectedTask[0].serial}`;
-                        let well_depth = `${
-                          sharedOptions.well.find(
-                            (w) => w.id == selectedTask[0].well_id,
-                          )?.name as string
-                        }@${selectedTask[0].depth}`;
-                        let datetime = new Date(
-                          selectedTaskInfo[0].sampling_time,
-                        );
-
-                        // Convert datetime to string with format YYYYMMDD HH:mm
-                        let datetime_str = `${datetime.getFullYear()}${(
-                          "0" +
-                          (datetime.getMonth() + 1)
-                        ).slice(-2)}${("0" + datetime.getDate()).slice(-2)} ${(
-                          "0" + datetime.getHours()
-                        ).slice(
-                          -2,
-                        )}:${("0" + datetime.getMinutes()).slice(-2)}`;
-
-                        data.forEach(
-                          (sample: { sample_type_id: number; qty: number }) => {
-                            let name = get_sample_name(sample.sample_type_id);
-                            if (sample.qty > 1) {
-                              for (let i = 1; i <= sample.qty; i++) {
-                                labels.push([
-                                  serial,
-                                  well_depth,
-                                  datetime_str,
-                                  `${name} (${i})`,
-                                ]);
-                              }
-                            } else {
-                              labels.push([
-                                serial,
-                                well_depth,
-                                datetime_str,
-                                name,
-                              ]);
-                            }
-                          },
-                        );
-
-                        let csvContent =
-                          "data:text/csv;charset=utf-8," +
-                          labels.map((row) => row.join(",")).join("\n");
-                        let encodedUri = encodeURI(csvContent);
-                        let link = document.createElement("a");
-                        link.setAttribute("href", encodedUri);
-                        link.setAttribute("download", "tags.csv");
-                        link.click();
-                        link.remove();
-                      }
-                    });
-                }}><Printer /></Button
+                onclick={printTags}><Printer /></Button
               >
             </div>
 

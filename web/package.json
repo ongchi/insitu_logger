@@ -37,6 +37,7 @@
     "@tanstack/table-core": "^8.20.5",
     "@tiptap/core": "^2.11.0",
     "@tiptap/pm": "^2.11.0",
-    "@tiptap/starter-kit": "^2.11.0"
+    "@tiptap/starter-kit": "^2.11.0",
+    "jspdf": "^2.5.2"
   }
 }
