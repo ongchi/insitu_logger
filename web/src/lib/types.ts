@@ -35,7 +35,7 @@ export type TaskSummary = {
   done: boolean
   serial: string
   well_id: number
-  depth: number
+  depth: string
   sample_set: Array<SampleSet>
   sampling_time: Date | null
 }
