@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label/index.js";
   import {
@@ -17,6 +16,8 @@
   import { get_name as get_sample_name } from "../task-table/sample-set-utils.ts";
   import jsPDF from "jspdf";
   import { NotoSansTC } from "$lib/NotoSansTC-Regular-normal.js";
+  import { buttonVariants } from "$lib/components/ui/button/index.js";
+  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
 
   let row = $derived(selectedTask.length > 0 ? selectedTask[0] : null);
   let taskInfoList: any[] = $state([]);
@@ -438,12 +439,18 @@
 
             <div class="grid items-center gap-2">
               <Label></Label>
-              <Button
-                disabled={row === null}
-                variant="ghost"
-                size="icon"
-                onclick={printTags}><Printer /></Button
-              >
+              <Tooltip.Provider>
+                <Tooltip.Root>
+                  <Tooltip.Trigger
+                    class={buttonVariants({ variant: "ghost", size: "icon" })}
+                    disabled={row === null}
+                    onclick={printTags}
+                  >
+                    <Printer />
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>Print Labels</Tooltip.Content>
+                </Tooltip.Root>
+              </Tooltip.Provider>
             </div>
 
             <div class="grid min-w-32 items-center gap-2">

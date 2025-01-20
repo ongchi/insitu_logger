@@ -3,6 +3,8 @@
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { Pencil } from "lucide-svelte";
+  import { buttonVariants } from "$lib/components/ui/button/index.js";
+  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
 
   let {
     disabled,
@@ -20,9 +22,17 @@
 
 <DropdownMenu.Root bind:open={dropdownIsOpen}>
   <DropdownMenu.Trigger {disabled}>
-    <Button {disabled} variant="ghost" size="icon" class="relative size-8 p-0">
-      <Pencil />
-    </Button>
+    <Tooltip.Provider>
+      <Tooltip.Root>
+        <Tooltip.Trigger
+          class={buttonVariants({ variant: "ghost", size: "icon" })}
+          {disabled}
+        >
+          <Pencil />
+        </Tooltip.Trigger>
+        <Tooltip.Content>Edit</Tooltip.Content>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Item onSelect={onAddTaskInfo}>Add</DropdownMenu.Item>

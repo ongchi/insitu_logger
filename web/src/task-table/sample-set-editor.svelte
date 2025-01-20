@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input/index.js";
   import { type SampleSet } from "$lib/types.ts";
   import { get_simplified_set, get_name } from "./sample-set-utils.ts";
   import { Check, X, Pencil } from "lucide-svelte";
   import * as Popover from "$lib/components/ui/popover/index.js";
   import EditMenu from "./sample-set-edit-menu.svelte";
+  import { buttonVariants } from "$lib/components/ui/button/index.js";
+  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
 
   let {
     initialSet,
@@ -94,26 +95,42 @@
   {#if isEditing}
     <div>
       <EditMenu bind:currentSet disabled={isSaving} />
-      <Button
-        variant="ghost"
-        size="icon"
-        onclick={handleSave}
-        disabled={isSaving}
-      >
-        <Check />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        onclick={handleCancel}
-        disabled={isSaving}
-      >
-        <X />
-      </Button>
+      <Tooltip.Provider>
+        <Tooltip.Root>
+          <Tooltip.Trigger
+            class={buttonVariants({ variant: "ghost", size: "icon" })}
+            disabled={isSaving}
+            onclick={handleSave}
+          >
+            <Check />
+          </Tooltip.Trigger>
+          <Tooltip.Content>Confirm</Tooltip.Content>
+        </Tooltip.Root>
+      </Tooltip.Provider>
+      <Tooltip.Provider>
+        <Tooltip.Root>
+          <Tooltip.Trigger
+            class={buttonVariants({ variant: "ghost", size: "icon" })}
+            disabled={isSaving}
+            onclick={handleCancel}
+          >
+            <X />
+          </Tooltip.Trigger>
+          <Tooltip.Content>Cancel</Tooltip.Content>
+        </Tooltip.Root>
+      </Tooltip.Provider>
     </div>
   {:else}
-    <Button variant="ghost" size="icon" onclick={() => (isEditing = true)}>
-      <Pencil />
-    </Button>
+    <Tooltip.Provider>
+      <Tooltip.Root>
+        <Tooltip.Trigger
+          class={buttonVariants({ variant: "ghost", size: "icon" })}
+          onclick={() => (isEditing = true)}
+        >
+          <Pencil />
+        </Tooltip.Trigger>
+        <Tooltip.Content>Edit</Tooltip.Content>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   {/if}
 </div>

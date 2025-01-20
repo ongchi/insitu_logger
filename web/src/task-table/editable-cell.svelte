@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
   import { Check, X, Pencil } from "lucide-svelte";
   import OptionSelector from "$lib/option-selector.svelte";
+  import { buttonVariants } from "$lib/components/ui/button/index.js";
+  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
 
   let {
     initialValue,
@@ -58,22 +59,30 @@
     {:else}
       <Input type={inputType} bind:value={currentValue} disabled={isSaving} />
     {/if}
-    <Button
-      variant="ghost"
-      size="icon"
-      disabled={isSaving}
-      onclick={handleSave}
-    >
-      <Check />
-    </Button>
-    <Button
-      variant="ghost"
-      size="icon"
-      disabled={isSaving}
-      onclick={handleCancel}
-    >
-      <X />
-    </Button>
+    <Tooltip.Provider>
+      <Tooltip.Root>
+        <Tooltip.Trigger
+          class={buttonVariants({ variant: "ghost", size: "icon" })}
+          disabled={isSaving}
+          onclick={handleSave}
+        >
+          <Check />
+        </Tooltip.Trigger>
+        <Tooltip.Content>Confirm</Tooltip.Content>
+      </Tooltip.Root>
+    </Tooltip.Provider>
+    <Tooltip.Provider>
+      <Tooltip.Root>
+        <Tooltip.Trigger
+          class={buttonVariants({ variant: "ghost", size: "icon" })}
+          disabled={isSaving}
+          onclick={handleCancel}
+        >
+          <X />
+        </Tooltip.Trigger>
+        <Tooltip.Content>Cancel</Tooltip.Content>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   </div>
 {:else}
   <div class="flex items-center space-x-1">
@@ -85,8 +94,16 @@
         {currentValue}
       {/if}
     </span>
-    <Button variant="ghost" size="icon" onclick={() => (isEditing = true)}>
-      <Pencil />
-    </Button>
+    <Tooltip.Provider>
+      <Tooltip.Root>
+        <Tooltip.Trigger
+          class={buttonVariants({ variant: "ghost", size: "icon" })}
+          onclick={() => (isEditing = true)}
+        >
+          <Pencil />
+        </Tooltip.Trigger>
+        <Tooltip.Content>Edit</Tooltip.Content>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   </div>
 {/if}

@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button/index.js";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { Plus, Eraser } from "lucide-svelte";
   import { sharedOptions, setS, setL } from "$lib/shared-variables.svelte.ts";
   import { type SampleSet } from "$lib/types.ts";
   import { get_id } from "./sample-set-utils.ts";
+  import { buttonVariants } from "$lib/components/ui/button/index.js";
+  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
 
   let {
     currentSet = $bindable(),
@@ -38,9 +39,16 @@
 
 <DropdownMenu.Root bind:open={dropdownIsOpen}>
   <DropdownMenu.Trigger {disabled}>
-    <Button variant="ghost" size="icon" class="relative size-8 p-0">
-      <Plus />
-    </Button>
+    <Tooltip.Provider>
+      <Tooltip.Root>
+        <Tooltip.Trigger
+          class={buttonVariants({ variant: "ghost", size: "icon" })}
+        >
+          <Plus />
+        </Tooltip.Trigger>
+        <Tooltip.Content>Add</Tooltip.Content>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     {#if currentSet.length == 0}
@@ -65,13 +73,18 @@
     {/if}
   </DropdownMenu.Content>
 </DropdownMenu.Root>
-<Button
-  variant="ghost"
-  size="icon"
-  class="relative size-8 p-0"
-  onclick={() => {
-    while (currentSet.length > 0) {
-      currentSet.pop();
-    }
-  }}><Eraser /></Button
->
+<Tooltip.Provider>
+  <Tooltip.Root>
+    <Tooltip.Trigger
+      class={buttonVariants({ variant: "ghost", size: "icon" })}
+      onclick={() => {
+        while (currentSet.length > 0) {
+          currentSet.pop();
+        }
+      }}
+    >
+      <Eraser />
+    </Tooltip.Trigger>
+    <Tooltip.Content>Clear</Tooltip.Content>
+  </Tooltip.Root>
+</Tooltip.Provider>
