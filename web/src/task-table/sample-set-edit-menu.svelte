@@ -24,6 +24,9 @@
   );
 
   let createSet = (set: { name: string; qty: number }[]) => {
+    if (currentSet === null) {
+      currentSet = [];
+    }
     set.forEach((item) => {
       let maybeItem = currentSet.find(
         (current) => current.id == get_id(item.name),
@@ -51,7 +54,7 @@
     </Tooltip.Provider>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
-    {#if currentSet.length == 0}
+    {#if currentSet === null || currentSet.length == 0}
       <DropdownMenu.Item
         onclick={() => {
           createSet(setS);

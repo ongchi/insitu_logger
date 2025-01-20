@@ -99,6 +99,9 @@ export const columns: ColumnDef<TaskSummary>[] = [
       return renderComponent(SampleSetEditor, {
         initialSet: row.original.sample_set,
         onSave: async (newValue: SampleSet[]) => {
+          if (row.original.sample_set === null) {
+            row.original.sample_set = []
+          }
 
           let addItem: SampleSet[] = []
           // Items not in the original sample set
