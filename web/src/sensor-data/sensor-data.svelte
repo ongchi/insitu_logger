@@ -1,15 +1,17 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button";
-  import { pgClient, selectedTaskInfo } from "$lib/shared-variables.svelte";
+  import {
+    pgClient,
+    selectedTaskInfo,
+    sensorDataUrl,
+  } from "$lib/shared-variables.svelte";
   import { toast } from "svelte-sonner";
 
-  let baseUrl = "http://localhost:80/troll_sensor_data/";
-
-  let iframeSrc = $state(baseUrl);
+  let iframeSrc = $state(sensorDataUrl);
 
   $effect(() => {
     if (selectedTaskInfo.length > 0) {
-      let src = `${baseUrl}?task_id=${selectedTaskInfo[0]?.task_id}`;
+      let src = `${sensorDataUrl}?task_id=${selectedTaskInfo[0]?.task_id}`;
       if (selectedTaskInfo[0]?.purging_time) {
         src += `&st=${selectedTaskInfo[0]?.purging_time}`;
       }

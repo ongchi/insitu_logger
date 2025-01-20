@@ -28,17 +28,17 @@ export function get_simplified_set(set: SampleSet[] | null) {
   );
 
   // Check if the set is a subset of setL
-  let so4_1l = extract(set, "SO4_1L");
-  let so4_2l = extract(set, "SO4_2L");
-  let so4_5l = extract(set, "SO4_5L");
+  let so4_1l = extract(set, "SO4 1L");
+  let so4_2l = extract(set, "SO4 2L");
+  let so4_5l = extract(set, "SO4 5L");
   let has_so4 =
     so4_1l !== undefined || so4_2l !== undefined || so4_5l !== undefined;
 
   let vaccum_vessel = extract(set, "真空瓶");
   let has_vaccum = vaccum_vessel !== undefined;
 
-  let serum_bottle_250 = extract(set, "血清瓶_250mL");
-  let serum_bottle_160 = extract(set, "血清瓶_160mL");
+  let serum_bottle_250 = extract(set, "血清瓶");
+  let serum_bottle_160 = extract(set, "血清瓶 160mL");
   let has_serum =
     serum_bottle_250 != undefined || serum_bottle_160 !== undefined;
 
@@ -52,7 +52,7 @@ export function get_simplified_set(set: SampleSet[] | null) {
 
   let simplified_set: (string | SampleSet)[] = [];
   if (is_set_l) {
-    if (contains(set, "H3")) {
+    if (contains(set, "H-3")) {
       simplified_set.push("大氚福");
     } else {
       simplified_set.push("大福");
@@ -64,14 +64,14 @@ export function get_simplified_set(set: SampleSet[] | null) {
     if (serum_bottle_250) simplified_set.push(serum_bottle_250);
     if (serum_bottle_160) simplified_set.push(serum_bottle_160);
   } else if (is_set_s) {
-    if (contains(set, "H3")) {
+    if (contains(set, "H-3")) {
       simplified_set.push("小氚福");
     } else {
       simplified_set.push("小福");
     }
     set.forEach((s) => {
       let s_label = get_name(s.id);
-      if (s_label !== "H3" && !set_s_label_list.includes(s_label)) {
+      if (s_label !== "H-3" && !set_s_label_list.includes(s_label)) {
         simplified_set.push(s);
       }
     });

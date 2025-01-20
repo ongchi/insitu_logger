@@ -11,13 +11,14 @@ export const sharedOptions: OptionsData = $state({
 export const selectedTask: TaskSummary[] = $state([])
 export const selectedTaskInfo: TaskInfo[] = $state([])
 
-export const token = $state(
+export const sensorDataUrl = 'http://localhost:80/troll_sensor_data/'
+export const postgrestUrl = 'http://localhost:3000'
+export const postgrestToken =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiZmllbGRfdXNlciJ9.o2y6ypM0xgYlXY8LsqEMuNkve-CBM4nP8pBvkGRzRk4'
-)
 
 export const pgClient: PostgrestClient = $state(
-  new PostgrestClient('http://localhost:3000', {
-    headers: { Authorization: `Bearer ${token}` },
+  new PostgrestClient(postgrestUrl, {
+    headers: { Authorization: `Bearer ${postgrestToken}` },
   })
 )
 
@@ -41,8 +42,8 @@ export const setL = [
   { name: 'HS-', qty: 2 },
   { name: 'I-', qty: 2 },
   { name: 'Ra', qty: 1 },
-  { name: 'Sr_Isotope', qty: 1 },
-  { name: 'SO4_5L', qty: 1 },
+  { name: 'Sr Isotope', qty: 1 },
+  { name: 'SO4 5L', qty: 1 },
   { name: '真空瓶', qty: 1 },
-  { name: '血清瓶_250mL', qty: 2 },
+  { name: '血清瓶', qty: 2 },
 ]
