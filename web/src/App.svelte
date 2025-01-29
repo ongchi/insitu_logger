@@ -9,10 +9,12 @@
   import { sharedOptions } from "$lib/shared-variables.svelte.ts";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { fetch_data } from "$lib/utils.js";
+  import { setMode } from "mode-watcher";
 
   let task_summary_data: TaskSummary[] = [];
 
   onMount(async () => {
+    setMode("light");
     fetch_data("well", "id,name", (data: any) => {
       sharedOptions.well = data;
     });
