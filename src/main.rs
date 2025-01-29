@@ -4,7 +4,7 @@ use axum::{
     routing::{get, Router},
 };
 use rust_embed::RustEmbed;
-use tokio::net::TcpListener;
+use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
 
 #[tokio::main]
@@ -13,16 +13,17 @@ async fn main() {
     let app = Router::new()
         .route("/ping", get(|| async { "pong" }))
         .route("/", get(index_handler))
-        .route("/*path", get(static_handler))
+        .route("/{*path}", get(static_handler))
         .layer(CorsLayer::new().allow_origin([
             HeaderValue::from_static("http://localhost:4000"),
             HeaderValue::from_static("http://localhost:5173"),
         ]));
 
     // Start server
-    let listener = TcpListener::bind("0.0.0.0:4000").await.unwrap();
-    println!("Listening on {:?}", listener.local_addr());
-    axum::serve(listener, app.into_make_service())
+    let addr = SocketAddr::from(([0, 0, 0, 0], 4000));
+    println!("Listening on {:?}", addr);
+    axum_server::bind(addr)
+        .serve(app.into_make_service())
         .await
         .unwrap();
 }
