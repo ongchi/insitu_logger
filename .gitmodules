@@ -1,0 +1,5 @@
+[submodule "web/bokeh"]
+	path = web/bokeh
+	url = https://github.com/bokeh/bokeh.git
+	branch = ianthomas23/bokehjs_examples_temp
+	shallow = true

@@ -29,6 +29,7 @@
     "vite": "^6.0.1"
   },
   "dependencies": {
+    "@bokeh/bokehjs": "file:bokeh/bokehjs/bokeh-bokehjs-3.7.0-dev.5.tgz",
     "@supabase/postgrest-js": "^1.17.7",
     "@svelte-plugins/datepicker": "^1.0.9",
     "@tailwindcss/container-queries": "^0.1.1",
