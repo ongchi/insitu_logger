@@ -24,6 +24,7 @@
   let selectedInfoId = $state(0);
   let selectedMinutedBy: string[] = $state([]);
   let selectedSampledBy: string[] = $state([]);
+  let currentPumpDepth = $state("");
 
   // Fetch task info id when row is selected
   function fetchTaskInfo(id: number) {
@@ -68,6 +69,7 @@
     taskInfoList = [];
     selectedTaskInfo.pop();
     selectedInfoId = 0;
+    currentPumpDepth = "";
     selectedMinutedBy = [];
     selectedSampledBy = [];
   }
@@ -93,6 +95,7 @@
           } else {
             selectedTaskInfo.pop();
             selectedTaskInfo.push(data[0]);
+            currentPumpDepth = findPumpDepth(data[0].hose_setup);
             fetchPeople("task_minuted_by", selectedInfoId, (data) => {
               selectedMinutedBy = data.map((d: any) => d.people_id.toString());
             });
@@ -170,6 +173,38 @@
         _updateTaskInfo(field, (ev.target as HTMLInputElement).value);
       }
     }, 300);
+  }
+
+  function findPumpDepth(hose_setup: string) {
+    let regexNums = /(?<num>\d*(?:\.\d*)?)(?:(?:\s*[,+]\s*)?)+/g;
+
+    let nums: number[] = [];
+    if (hose_setup === null) return "";
+    let match = hose_setup.matchAll(regexNums);
+    if (match === null) return "";
+    match.forEach((item) => {
+      if (item.groups) {
+        let n = parseFloat(item.groups.num);
+        if (n) nums.push(n);
+      }
+    });
+
+    let pumpDepth = parseFloat(selectedTask[0].depth);
+    if (nums.reduce((acc, cur) => acc + cur, 0) < pumpDepth) {
+      return null;
+    }
+
+    for (let i = nums.length - 1; i > 0; i--) {
+      if (pumpDepth > nums[i]) {
+        pumpDepth -= nums[i];
+      } else {
+        break;
+      }
+    }
+
+    return pumpDepth.toLocaleString(undefined, {
+      maximumFractionDigits: 2,
+    });
   }
 
   function addPeopleToList(table: string, people_id: string) {
@@ -326,9 +361,40 @@
                 onchange={(e) => {
                   updateTaskInfo(e, "hose_setup");
                 }}
+                oninput={(e) => {
+                  currentPumpDepth = findPumpDepth(
+                    (e.target as HTMLInputElement).value,
+                  );
+                }}
+                onkeypress={(e) => {
+                  // prettier-ignore
+                  let validKeys = [
+                    "0", "1", "2", "3", "4",
+                    "5", "6", "7", "8", "9",
+                    ".", ",", "+", " ",
+                  ];
+
+                  if (!validKeys.includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
               ></Input>
             </div>
 
+            <div class="grid min-w-32 items-center gap-2">
+              <Label for="auto_pump_depth">Pump Depth (m)</Label>
+              <Input
+                readonly={true}
+                disabled={selectedTaskInfo.length === 0}
+                id="auto_pump_depth"
+                type="number"
+                value={currentPumpDepth}
+              ></Input>
+            </div>
+          </div>
+
+          <!-- Line 2 -->
+          <div class="flex flex-row flex-wrap gap-2">
             <div class="grid min-w-32 items-center gap-2">
               <Label for="water_level">Water Level (m)</Label>
               <Input
@@ -341,10 +407,7 @@
                 }}
               ></Input>
             </div>
-          </div>
 
-          <!-- Line 2 -->
-          <div class="flex flex-row flex-wrap gap-2">
             <div class="grid min-w-32 items-center gap-2">
               <Label>Pump</Label>
               <OptionSelector
@@ -355,19 +418,6 @@
                   _updateTaskInfo("pump_id", value);
                 }}
               ></OptionSelector>
-            </div>
-
-            <div class="grid min-w-32 items-center gap-2">
-              <Label for="pump_depth">Pump Depth (m)</Label>
-              <Input
-                disabled={selectedTaskInfo.length === 0}
-                id="pump_depth"
-                type="number"
-                value={selectedTaskInfo[0]?.pump_depth}
-                onchange={(e) => {
-                  updateTaskInfo(e, "pump_depth");
-                }}
-              ></Input>
             </div>
 
             <div class="grid min-w-32 items-center gap-2">
