@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button";
+  import { Input } from "$lib/components/ui/input";
   import { pgClient, selectedTaskInfo } from "$lib/shared-variables.svelte";
   import { toast } from "svelte-sonner";
   import { ColumnDataSource } from "@bokeh/bokehjs";
@@ -15,6 +16,7 @@
     create_annotation_bounds,
     test_sampling_dataframe,
   } from "./test_function.ts";
+  import { csvLogParser } from "./csv-log-handler.ts";
 
   let SQL_TO_FULL_COLUMN_NAME: { [id: string]: string } = {
     datetime: "Date and Time",
@@ -40,20 +42,29 @@
     depth: "Depth (m)",
   };
   let columns = Object.keys(SQL_TO_FULL_COLUMN_NAME);
+  let source = $state(new ColumnDataSource({ data: {} }));
 
   let plots: Figure[] = $state([]);
   let purgingTime = $derived(
     (() => {
       let purgingTimeStr = selectedTaskInfo[0]?.purging_time;
-      return purgingTimeStr ? Date.parse(purgingTimeStr) : null;
+      // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
+      return purgingTimeStr
+        ? Date.parse(purgingTimeStr) + 8 * 3600 * 1000
+        : null;
     })(),
   );
   let samplingTime = $derived(
     (() => {
       let samplingTimeStr = selectedTaskInfo[0]?.sampling_time;
-      return samplingTimeStr ? Date.parse(samplingTimeStr) : null;
+      // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
+      return samplingTimeStr
+        ? Date.parse(samplingTimeStr) + 8 * 3600 * 1000
+        : null;
     })(),
   );
+
+  let logFileInput: any = $state();
 
   $effect(() => {
     if (selectedTaskInfo.length > 0) {
@@ -67,53 +78,9 @@
         .then(({ data, error }) => {
           if (error) {
             toast.error(error.message);
-          } else {
-            let source = createColumnDataSource(data);
+          } else if (data.length > 0) {
+            source = createColumnDataSource(data);
             createGridPlot(source);
-
-            if (purgingTime) {
-              plots.forEach((p) => {
-                p.vspan(purgingTime, { line_width: 2, line_color: "green" });
-                p.vspan(purgingTime + 1 * 3600 * 1000, {
-                  line_width: 2,
-                  line_color: "gray",
-                });
-              });
-            }
-
-            if (samplingTime) {
-              plots.forEach((p) =>
-                p.vspan(samplingTime, { line_width: 2, line_color: "red" }),
-              );
-            }
-
-            if (purgingTime) {
-              let test_result = test_sampling_dataframe(
-                source.data as any,
-                5 * 60 * 1000,
-              );
-              let annotation_bounds = create_annotation_bounds(
-                test_result,
-                purgingTime,
-              );
-              columns.forEach((key, idx) => {
-                if (
-                  key in annotation_bounds &&
-                  annotation_bounds[key].length > 0
-                ) {
-                  annotation_bounds[key].forEach((bounds) => {
-                    plots[idx - 1].add_layout(
-                      new BoxAnnotation({
-                        left: bounds[0],
-                        right: bounds[1],
-                        fill_color: "#D55E00",
-                        propagate_hover: true,
-                      }),
-                    );
-                  });
-                }
-              });
-            }
           }
         });
     }
@@ -130,7 +97,10 @@
       if (key === "datetime") {
         let datetime = data.map((d: any) => Date.parse(d["datetime"]));
         let timestamp = datetime.map((d: any) => new Date(d).toString());
-        transformedData["datetime"] = datetime;
+        // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
+        transformedData["datetime"] = datetime.map(
+          (d: number) => d + 8 * 3600 * 1000,
+        );
         transformedData["timestamp"] = timestamp;
       } else {
         transformedData[key] = data.map((d: any) => d[key]);
@@ -181,11 +151,138 @@
 
     let grid = gridplot(plots, { sizing_mode: "stretch_width", ncols: 4 });
     show(grid, "#bokehjs-plot");
+
+    if (purgingTime) {
+      plots.forEach((p) => {
+        p.vspan(purgingTime, { line_width: 1, line_color: "green" });
+        p.vspan(purgingTime + 1 * 3600 * 1000, {
+          line_width: 1,
+          line_color: "gray",
+        });
+      });
+    }
+
+    if (samplingTime) {
+      plots.forEach((p) =>
+        p.vspan(samplingTime, { line_width: 1, line_color: "red" }),
+      );
+    }
+
+    if (purgingTime) {
+      let test_result = test_sampling_dataframe(
+        data_source.data as any,
+        5 * 60 * 1000,
+      );
+      let annotation_bounds = create_annotation_bounds(
+        test_result,
+        purgingTime,
+      );
+      columns.forEach((key, idx) => {
+        if (key in annotation_bounds && annotation_bounds[key].length > 0) {
+          annotation_bounds[key].forEach((bounds) => {
+            plots[idx - 1].add_layout(
+              new BoxAnnotation({
+                left: bounds[0],
+                right: bounds[1],
+                fill_color: "#D55E00",
+                propagate_hover: true,
+              }),
+            );
+          });
+        }
+      });
+    }
+  }
+
+  function onLogFileChanged(ev: Event) {
+    let file = (ev.target as HTMLInputElement).files?.[0];
+    if (file) {
+      let reader = new FileReader();
+      reader.onload = (e) => {
+        let dataTable: null | { [key: string]: number[] } = csvLogParser(
+          e.target?.result as string,
+        );
+        if (dataTable) {
+          uploadData(dataTable);
+
+          let data: { [key: string]: (number | string | Date)[] } = {
+            ...dataTable,
+          };
+          data["timestamp"] = data["datetime"].map((d) =>
+            new Date(d).toString(),
+          );
+          // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
+          data["datetime"] = data["datetime"].map(
+            (d) => (d as number) + 8 * 3600 * 1000,
+          );
+          source = new ColumnDataSource({
+            data: data,
+          });
+          clearPlot();
+          createGridPlot(source);
+        }
+      };
+      reader.readAsText(file, "iso-8859-3");
+      (ev.target as HTMLInputElement).value = "";
+    }
+  }
+
+  function uploadData(dataTable: { [key: string]: number[] }) {
+    let currentTaskId = selectedTaskInfo[0]?.task_id;
+
+    pgClient
+      .from("sensor_data")
+      .select("datetime")
+      .eq("task_id", currentTaskId)
+      .order("datetime", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) {
+          toast.error(error.message);
+        } else {
+          let lastDataTime = data.length > 0 ? Date.parse(data[0].datetime) : 0;
+          let stIdx = dataTable["datetime"].findIndex((d) => d > lastDataTime);
+
+          let filteredData: { [key: string]: number | string }[] = [];
+          for (let i = stIdx; i < dataTable["datetime"].length; i++) {
+            let row: { [key: string]: number | string } = {};
+            Object.keys(dataTable).forEach((key) => {
+              row[key] = dataTable[key][i];
+            });
+            row["task_id"] = currentTaskId;
+            // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
+            row["datetime"] = new Date(
+              (row["datetime"] as number) + 8 * 3600 * 1000,
+            ).toISOString();
+            filteredData.push(row);
+          }
+
+          pgClient
+            .from("sensor_data")
+            .insert(filteredData)
+            .then(({ error }) => {
+              if (error) {
+                toast.error(error.message);
+              } else {
+                toast.success("Data uploaded");
+              }
+            });
+        }
+      });
   }
 </script>
 
 {#if selectedTaskInfo.length > 0}
-  <div class="flex w-full">
+  <div class="flex w-full px-2">
+    <div class="grid px-2 items-center gap-1.5">
+      <Input
+        bind:this={logFileInput}
+        id="log_file"
+        type="file"
+        accept=".csv,.txt"
+        placeholder="Upload log file"
+        onchange={onLogFileChanged}
+      />
+    </div>
     <div class="flex px-2 ml-auto">
       <Button
         variant="destructive"
