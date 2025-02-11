@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
+  import { Label } from "$lib/components/ui/label";
+  import LogEditMenu from "./log-edit-menu.svelte";
   import { pgClient, selectedTaskInfo } from "$lib/shared-variables.svelte";
   import { toast } from "svelte-sonner";
   import { ColumnDataSource } from "@bokeh/bokehjs";
@@ -273,7 +274,8 @@
 
 {#if selectedTaskInfo.length > 0}
   <div class="flex w-full px-2">
-    <div class="grid px-2 items-center gap-1.5">
+    <div class="flex flex-column px-2 items-center gap-1.5">
+      <Label class="min-w-[4em]" for="log_file">Log File</Label>
       <Input
         bind:this={logFileInput}
         id="log_file"
@@ -282,12 +284,9 @@
         placeholder="Upload log file"
         onchange={onLogFileChanged}
       />
-    </div>
-    <div class="flex px-2 ml-auto">
-      <Button
-        variant="destructive"
-        size="sm"
-        onclick={() => {
+      <LogEditMenu
+        disabled={selectedTaskInfo.length == 0}
+        onClearLogData={() => {
           pgClient
             .from("sensor_data")
             .delete()
@@ -300,8 +299,8 @@
                 clearPlot();
               }
             });
-        }}>Clear</Button
-      >
+        }}
+      />
     </div>
   </div>
   <div class="w-full px-2">
