@@ -11,10 +11,8 @@ export const sharedOptions: OptionsData = $state({
 export const selectedTask: TaskSummary[] = $state([])
 export const selectedTaskInfo: TaskInfo[] = $state([])
 
-export const sensorDataUrl = 'http://localhost:80/troll_sensor_data/'
-export const postgrestUrl = 'http://localhost:3000'
-export const postgrestToken =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiZmllbGRfdXNlciJ9.o2y6ypM0xgYlXY8LsqEMuNkve-CBM4nP8pBvkGRzRk4'
+export const postgrestUrl = (import.meta as any).env.VITE_POSTGREST_ROOT
+export const postgrestToken = (import.meta as any).env.VITE_POSTGREST_TOKEN
 
 export const pgClient: PostgrestClient = $state(
   new PostgrestClient(postgrestUrl, {
