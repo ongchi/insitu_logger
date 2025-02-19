@@ -15,7 +15,7 @@
 
   onMount(async () => {
     setMode("light");
-    fetch_data("well", "id,name", (data: any) => {
+    fetch_data("well", "id,name,type", (data: any) => {
       sharedOptions.well = data;
     });
     fetch_data("pump", "id,name", (data: any) => {

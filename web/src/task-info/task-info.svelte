@@ -191,7 +191,7 @@
 
     let pumpDepth = parseFloat(selectedTask[0].depth);
     if (nums.reduce((acc, cur) => acc + cur, 0) < pumpDepth) {
-      return null;
+      return "";
     }
 
     for (let i = nums.length - 1; i > 0; i--) {
@@ -242,10 +242,22 @@
           toast.error(error.message);
         } else {
           let serial = `#${selectedTask[0].serial}`;
+          let well_type = sharedOptions.well.find(
+            (w) => w.id == selectedTask[0].well_id,
+          )?.type;
+
+          let conj;
+          if (well_type === "SW") {
+            conj = "_";
+          } else {
+            conj = "@";
+          }
+
           let well_depth = `${
             sharedOptions.well.find((w) => w.id == selectedTask[0].well_id)
               ?.name as string
-          }@${selectedTask[0].depth}`;
+          }${conj}${selectedTask[0].depth}`;
+
           let datetime = new Date(selectedTaskInfo[0].sampling_time);
 
           // Convert datetime to string with format YYYYMMDD HH:mm
