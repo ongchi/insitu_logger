@@ -10,7 +10,9 @@
   import {
     type PaginationState,
     type RowSelectionState,
+    type ColumnFiltersState,
     getCoreRowModel,
+    getFilteredRowModel,
     getPaginationRowModel,
   } from "@tanstack/table-core";
   import {
@@ -27,11 +29,13 @@
   import { fetch_data } from "$lib/utils.js";
   import DataTableActions from "./table-actions.svelte";
   import { get_simplified_set } from "./sample-set-utils.js";
+  import DateRangePicker from "./date-range-picker.svelte";
 
   let { data }: { data: TaskSummary[] } = $props();
 
   let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 5 });
   let rowSelection = $state<RowSelectionState>({});
+  let columnFilters = $state<ColumnFiltersState>([]);
 
   const table = createSvelteTable({
     get data() {
@@ -40,6 +44,9 @@
     columns,
     enableMultiRowSelection: false,
     state: {
+      get columnFilters() {
+        return columnFilters;
+      },
       get pagination() {
         return pagination;
       },
@@ -48,7 +55,15 @@
       },
     },
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onColumnFiltersChange: (updater) => {
+      if (typeof updater === "function") {
+        columnFilters = updater(columnFilters);
+      } else {
+        columnFilters = updater;
+      }
+    },
     onPaginationChange: (updater) => {
       if (typeof updater === "function") {
         pagination = updater(pagination);
@@ -144,7 +159,7 @@
 </script>
 
 <div class="w-full px-2 py-2">
-  <div class="flex items-center justify-between space-x-2 text-sm">
+  <div class="flex justify-between space-x-2 mb-2 text-sm">
     <div class="flex items-center space-x-2">
       <Popover.Root bind:open={popoverOpen}>
         <Popover.Trigger class={buttonVariants({ variant: "ghost" })}
@@ -176,7 +191,14 @@
       </Popover.Root>
       <Button variant="ghost" onclick={exportTaskData}><Share />Export</Button>
     </div>
-    <div class="flex items-center space-x-2 ml-auto">
+    <DateRangePicker
+      onValueChange={(date_range: any) => {
+        if (date_range.start && date_range.end) {
+          table.getColumn("sampling_time")?.setFilterValue(date_range);
+        }
+      }}
+    />
+    <div class="flex space-x-2">
       <Button
         variant="ghost"
         size="icon"
@@ -185,7 +207,7 @@
       >
         <ChevronLeft />
       </Button>
-      <div class="flex space-x-1">
+      <div class="flex items-center space-x-1">
         <span>Page</span>
         <Input
           type="number"

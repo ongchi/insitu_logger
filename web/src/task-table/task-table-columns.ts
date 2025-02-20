@@ -8,6 +8,7 @@ import SampleSetEditor from './sample-set-editor.svelte'
 import { toast } from 'svelte-sonner'
 import type { TaskSummary, SampleSet } from '$lib/types.ts'
 import type { PostgrestError } from '@supabase/postgrest-js'
+import { getLocalTimeZone, } from "@internationalized/date";
 
 function handle_pg_error(error: PostgrestError | null) {
   if (error) {
@@ -171,6 +172,16 @@ export const columns: ColumnDef<TaskSummary>[] = [
   {
     accessorKey: 'sampling_time',
     header: 'Sampling Time',
+    filterFn: (rows, id, filterValue) => {
+      let start: Date = filterValue.start.toDate(getLocalTimeZone());
+      let end: Date = filterValue.end.add({ days: 1 }).toDate(getLocalTimeZone());
+
+      if (rows.original.sampling_time === null) {
+        return true
+      } else {
+        return rows.original.sampling_time >= start && rows.original.sampling_time < end
+      }
+    },
     cell: ({ row }) => {
       const date = row.original.sampling_time
       if (date === null) {

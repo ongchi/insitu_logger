@@ -29,6 +29,9 @@
         if (d.sample_set === null) {
           d.sample_set = [];
         }
+        if (d.sampling_time !== null) {
+          d.sampling_time = new Date(d.sampling_time);
+        }
         return d;
       });
     });
