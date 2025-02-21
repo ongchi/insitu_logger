@@ -29,7 +29,8 @@
   import { fetch_data } from "$lib/utils.js";
   import DataTableActions from "./table-actions.svelte";
   import { get_simplified_set } from "./sample-set-utils.js";
-  import DateRangePicker from "./date-range-picker.svelte";
+  import SamplingTimeRangePicker from "./sampling-time-range-picker.svelte";
+  import type { DateRange } from "bits-ui";
 
   let { data }: { data: TaskSummary[] } = $props();
 
@@ -194,10 +195,13 @@
       </Popover.Root>
       <Button variant="ghost" onclick={exportTaskData}><Share />Export</Button>
     </div>
-    <DateRangePicker
-      onValueChange={(date_range: any) => {
-        if (date_range.start && date_range.end) {
+    <SamplingTimeRangePicker
+      onValueChange={(date_range: DateRange | undefined) => {
+        if (date_range && date_range.start && date_range.end) {
           table.getColumn("sampling_time")?.setFilterValue(date_range);
+        } else {
+          // clear filter
+          table.getColumn("sampling_time")?.setFilterValue(undefined);
         }
       }}
     />

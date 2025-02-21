@@ -25,3 +25,9 @@ export function fetch_data(table: string, columns: string, callback: Function) {
       }
     })
 }
+
+export function findMonday(d: Date) {
+  let day = d.getDay();
+  let diff = d.getDate() - day + (day == 0 ? -6 : 1); // adjust when day is sunday
+  return new Date(d.setDate(diff));
+}
