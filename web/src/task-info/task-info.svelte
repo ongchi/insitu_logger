@@ -241,22 +241,32 @@
         if (error) {
           toast.error(error.message);
         } else {
-          let serial = `#${selectedTask[0].serial}`;
           let well_type = sharedOptions.well.find(
             (w) => w.id == selectedTask[0].well_id,
           )?.type;
 
-          let conj;
-          if (well_type === "SW") {
-            conj = "_";
+          let serial;
+          if (well_type === "BLANK") {
+            serial = "BLANK";
           } else {
-            conj = "@";
+            serial = `#${selectedTask[0].serial}`;
           }
 
-          let well_depth = `${
-            sharedOptions.well.find((w) => w.id == selectedTask[0].well_id)
-              ?.name as string
-          }${conj}${selectedTask[0].depth}`;
+          let well_depth;
+          if (well_type === "BLANK") {
+            well_depth = selectedTask[0].depth;
+          } else {
+            let conj;
+            if (well_type === "SW") {
+              conj = "_";
+            } else {
+              conj = "@";
+            }
+            well_depth = `${
+              sharedOptions.well.find((w) => w.id == selectedTask[0].well_id)
+                ?.name as string
+            }${conj}${selectedTask[0].depth}`;
+          }
 
           let datetime = new Date(selectedTaskInfo[0].sampling_time);
 
