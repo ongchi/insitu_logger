@@ -125,7 +125,10 @@
 
   function exportTaskData() {
     let tasks = [["Serial", "Well", "Depth", "Sample Set", "Sampling Time"]];
-    data.forEach((task) => {
+    let filteredData = table
+      .getFilteredRowModel()
+      .rows.map((row) => row.original as TaskSummary);
+    filteredData.forEach((task) => {
       let sampleSet = get_simplified_set(task.sample_set)[0];
       let sampleSetName = typeof sampleSet === "string" ? sampleSet : "N/A";
 
