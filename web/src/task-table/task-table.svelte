@@ -125,7 +125,9 @@
   }
 
   function exportTaskData() {
-    let tasks = [["Serial", "Well", "Depth", "Sample Set", "Sampling Time"]];
+    let tasks = [
+      ["Serial", "Well", "Depth", "Sample Set", "Sampling Time", "Comment"],
+    ];
     let filteredData = table
       .getFilteredRowModel()
       .rows.map((row) => row.original as TaskSummary);
@@ -139,6 +141,7 @@
         task.depth,
         sampleSetName,
         task.sampling_time ? task.sampling_time.toString() : "N/A",
+        task.comment ? task.comment : "",
       ]);
     });
 

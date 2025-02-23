@@ -39,6 +39,7 @@ export type TaskSummary = {
   depth: string
   sample_set: Array<SampleSet>
   sampling_time: Date | null
+  comment: string | null
 }
 
 export type TaskInfo = {
