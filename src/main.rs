@@ -46,11 +46,11 @@ async fn insitu_log_handler(mut multipart: Multipart) -> Result<Json<InSituLogRe
 
         match ext {
             "csv" => InSituLogReader::from_csv(&mut reader)
-                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?,
             "txt" => InSituLogReader::from_txt(&mut reader)
-                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?,
             "zip" => InSituLogReader::from_zipped_html(&mut reader)
-                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?,
             _ => return Err(StatusCode::BAD_REQUEST)?,
         }
     } else {

@@ -57,3 +57,9 @@ export type TaskInfo = {
   sample_wt_radium: number
   comment: string
 }
+
+export type InSituLog = {
+  attr: object
+  log_note: object[]
+  log_data: object[]
+}

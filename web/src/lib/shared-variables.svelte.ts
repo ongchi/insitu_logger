@@ -11,6 +11,7 @@ export const sharedOptions: OptionsData = $state({
 export const selectedTask: TaskSummary[] = $state([])
 export const selectedTaskInfo: TaskInfo[] = $state([])
 
+export const apiUrl = (import.meta as any).env.VITE_API_URL
 export const postgrestUrl = (import.meta as any).env.VITE_POSTGREST_ROOT
 export const postgrestToken = (import.meta as any).env.VITE_POSTGREST_TOKEN
 

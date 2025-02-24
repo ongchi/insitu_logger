@@ -2,7 +2,11 @@
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
   import LogEditMenu from "./log-edit-menu.svelte";
-  import { pgClient, selectedTaskInfo } from "$lib/shared-variables.svelte";
+  import {
+    pgClient,
+    selectedTaskInfo,
+    apiUrl,
+  } from "$lib/shared-variables.svelte";
   import { toast } from "svelte-sonner";
   import { ColumnDataSource } from "@bokeh/bokehjs";
   import {
@@ -17,7 +21,9 @@
     create_annotation_bounds,
     test_sampling_dataframe,
   } from "./test_function.ts";
-  import { csvLogParser } from "./csv-log-handler.ts";
+  import { insitu_log_handler } from "./csv-log-handler.ts";
+  import axios from "axios";
+  import { type InSituLog } from "$lib/types.ts";
 
   let SQL_TO_FULL_COLUMN_NAME: { [id: string]: string } = {
     datetime: "Date and Time",
@@ -51,7 +57,8 @@
       let purgingTimeStr = selectedTaskInfo[0]?.purging_time;
       // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
       return purgingTimeStr
-        ? Date.parse(purgingTimeStr) + 8 * 3600 * 1000
+        ? Date.parse(purgingTimeStr) -
+            new Date().getTimezoneOffset() * 60 * 1000
         : null;
     })(),
   );
@@ -60,7 +67,8 @@
       let samplingTimeStr = selectedTaskInfo[0]?.sampling_time;
       // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
       return samplingTimeStr
-        ? Date.parse(samplingTimeStr) + 8 * 3600 * 1000
+        ? Date.parse(samplingTimeStr) -
+            new Date().getTimezoneOffset() * 60 * 1000
         : null;
     })(),
   );
@@ -100,7 +108,7 @@
         let timestamp = datetime.map((d: any) => new Date(d).toString());
         // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
         transformedData["datetime"] = datetime.map(
-          (d: number) => d + 8 * 3600 * 1000,
+          (d: number) => d - new Date().getTimezoneOffset() * 60 * 1000,
         );
         transformedData["timestamp"] = timestamp;
       } else {
@@ -198,33 +206,38 @@
   function onLogFileChanged(ev: Event) {
     let file = (ev.target as HTMLInputElement).files?.[0];
     if (file) {
-      let reader = new FileReader();
-      reader.onload = (e) => {
-        let dataTable: null | { [key: string]: number[] } = csvLogParser(
-          e.target?.result as string,
-        );
-        if (dataTable) {
-          uploadData(dataTable);
+      let form = new FormData();
+      form.append("log_file", file);
+      axios
+        .post(`${apiUrl}/insitu_log`, form)
+        .then((response) => {
+          let logData: InSituLog = response.data;
+          let dataTable = insitu_log_handler(logData);
 
-          let data: { [key: string]: (number | string | Date)[] } = {
-            ...dataTable,
-          };
-          data["timestamp"] = data["datetime"].map((d) =>
-            new Date(d).toString(),
-          );
-          // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
-          data["datetime"] = data["datetime"].map(
-            (d) => (d as number) + 8 * 3600 * 1000,
-          );
-          source = new ColumnDataSource({
-            data: data,
-          });
-          clearPlot();
-          createGridPlot(source);
-        }
-      };
-      reader.readAsText(file, "iso-8859-3");
-      (ev.target as HTMLInputElement).value = "";
+          if (dataTable) {
+            uploadData(dataTable);
+
+            let data: { [key: string]: (number | string | Date)[] } = {
+              ...dataTable,
+            };
+            data["timestamp"] = data["datetime"].map((d) =>
+              new Date(d).toString(),
+            );
+            // NOTE: Bokeh axis ticks hack
+            data["datetime"] = data["datetime"].map(
+              (d) => (d as number) - new Date().getTimezoneOffset() * 60 * 1000,
+            );
+            source = new ColumnDataSource({
+              data: data,
+            });
+            clearPlot();
+            createGridPlot(source);
+          }
+        })
+        .catch((error) => console.error(error))
+        .finally(() => {
+          (ev.target as HTMLInputElement).value = "";
+        });
     }
   }
 
@@ -243,17 +256,20 @@
           let lastDataTime = data.length > 0 ? Date.parse(data[0].datetime) : 0;
           let stIdx = dataTable["datetime"].findIndex((d) => d > lastDataTime);
 
-          let filteredData: { [key: string]: number | string }[] = [];
+          let filteredData: { [key: string]: number | string | Date }[] = [];
           for (let i = stIdx; i < dataTable["datetime"].length; i++) {
-            let row: { [key: string]: number | string } = {};
+            let row: { [key: string]: number | string | Date } = {};
             Object.keys(dataTable).forEach((key) => {
-              row[key] = dataTable[key][i];
+              if (key === "datetime") {
+                // The database stores datetime in local time,
+                // so we need to add local tz offset before storing it
+                row[key] = new Date(dataTable[key][i]).toUTCString();
+                console.log(row[key]);
+              } else {
+                row[key] = dataTable[key][i];
+              }
             });
             row["task_id"] = currentTaskId;
-            // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
-            row["datetime"] = new Date(
-              (row["datetime"] as number) + 8 * 3600 * 1000,
-            ).toISOString();
             filteredData.push(row);
           }
 
