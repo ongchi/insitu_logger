@@ -8,9 +8,11 @@ lto = true
 strip = true
 
 [dependencies]
-axum = "0.8.1"
-axum-server = "0.7.1"
+axum = { version = "0.8", features = ["multipart"] }
+axum-server = "0.7"
+insitu_log_reader = { path = "../insitu_log_reader" }
 mime_guess = "2"
 tokio = { version = "1.42", features = ["full"] }
 tower-http = { version = "0.6", features = ["cors"] }
 rust-embed = { version = "8.5", features = ["axum-ex"] }
+serde_json = "1.0"
