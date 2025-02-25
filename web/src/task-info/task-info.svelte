@@ -18,21 +18,22 @@
   import { NotoSansTC } from "$lib/NotoSansTC-Regular-normal.js";
   import { buttonVariants } from "$lib/components/ui/button/index.js";
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
+  import { localDateStringToISOString, dateToLocalString } from "$lib/utils.ts";
 
   let row = $derived(selectedTask.length > 0 ? selectedTask[0] : null);
-  let taskInfoList: any[] = $state([]);
+  let taskInfoList: { id: number; name: string }[] = $state([]);
   let selectedInfoId = $state(0);
   let selectedMinutedBy: string[] = $state([]);
   let selectedSampledBy: string[] = $state([]);
   let currentPumpDepth = $state("");
 
   // Fetch task info id when row is selected
-  function fetchTaskInfo(id: number) {
+  function fetchTaskInfoIds(task_id: number) {
     pgClient
       .from("task_info")
       .select("id")
       .order("id", { ascending: false })
-      .eq("task_id", id)
+      .eq("task_id", task_id)
       .then(({ data, error }) => {
         if (error) {
           taskInfoList = [];
@@ -76,7 +77,7 @@
 
   $effect(() => {
     if (row) {
-      fetchTaskInfo(row.id);
+      fetchTaskInfoIds(row.id);
     } else {
       clearVars();
     }
@@ -94,7 +95,12 @@
             clearVars();
           } else {
             selectedTaskInfo.pop();
-            selectedTaskInfo.push(data[0]);
+            let { purging_time, sampling_time, ...info } = data[0];
+            selectedTaskInfo.push({
+              purging_time: purging_time ? new Date(purging_time) : null,
+              sampling_time: sampling_time ? new Date(sampling_time) : null,
+              ...info,
+            });
             currentPumpDepth = findPumpDepth(data[0].hose_setup);
             fetchPeople("task_minuted_by", selectedInfoId, (data) => {
               selectedMinutedBy = data.map((d: any) => d.people_id.toString());
@@ -122,7 +128,7 @@
         if (error) {
           toast.error(error.message);
         } else {
-          fetchTaskInfo(row.id);
+          fetchTaskInfoIds(row.id);
         }
       });
   }
@@ -139,7 +145,7 @@
         if (error) {
           toast.error(error.message);
         } else {
-          fetchTaskInfo(row.id);
+          fetchTaskInfoIds(row.id);
         }
       });
   }
@@ -170,7 +176,14 @@
     }
     updateTimeOut = setTimeout(() => {
       if (ev.target) {
-        _updateTaskInfo(field, (ev.target as HTMLInputElement).value);
+        if (field === "sampling_time" || field === "purging_time") {
+          _updateTaskInfo(
+            field,
+            localDateStringToISOString((ev.target as HTMLInputElement).value),
+          );
+        } else {
+          _updateTaskInfo(field, (ev.target as HTMLInputElement).value);
+        }
       }
     }, 300);
   }
@@ -241,6 +254,10 @@
         if (error) {
           toast.error(error.message);
         } else {
+          let datetime = selectedTaskInfo[0].sampling_time;
+
+          if (datetime === null) return;
+
           let well_type = sharedOptions.well.find(
             (w) => w.id == selectedTask[0].well_id,
           )?.type;
@@ -267,8 +284,6 @@
                 ?.name as string
             }${conj}${selectedTask[0].depth}`;
           }
-
-          let datetime = new Date(selectedTaskInfo[0].sampling_time);
 
           // Convert datetime to string with format YYYYMMDD HH:mm
           let datetime_str = `${datetime.getFullYear()}-${(
@@ -477,7 +492,7 @@
                 disabled={selectedTaskInfo.length === 0}
                 id="purging_time"
                 type="datetime-local"
-                value={selectedTaskInfo[0]?.purging_time}
+                value={dateToLocalString(selectedTaskInfo[0]?.purging_time)}
                 onchange={(e) => {
                   updateTaskInfo(e, "purging_time");
                 }}
@@ -502,7 +517,7 @@
                 disabled={selectedTaskInfo.length === 0}
                 id="sampling_time"
                 type="datetime-local"
-                value={selectedTaskInfo[0]?.sampling_time}
+                value={dateToLocalString(selectedTaskInfo[0]?.sampling_time)}
                 onchange={(e) => {
                   updateTaskInfo(e, "sampling_time");
                 }}

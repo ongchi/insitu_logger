@@ -24,6 +24,10 @@
   import { insitu_log_handler } from "./csv-log-handler.ts";
   import axios from "axios";
   import { type InSituLog } from "$lib/types.ts";
+  import { dateToISOString } from "$lib/utils.ts";
+
+  // Local datetime hack for BokehJS
+  let LOCAL_TIME_OFFSET = new Date().getTimezoneOffset() * 60 * 1000;
 
   let SQL_TO_FULL_COLUMN_NAME: { [id: string]: string } = {
     datetime: "Date and Time",
@@ -55,20 +59,18 @@
   let purgingTime = $derived(
     (() => {
       let purgingTimeStr = selectedTaskInfo[0]?.purging_time;
-      // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
+      // Local datetime hack for BokehJS
       return purgingTimeStr
-        ? Date.parse(purgingTimeStr) -
-            new Date().getTimezoneOffset() * 60 * 1000
+        ? purgingTimeStr.getTime() - LOCAL_TIME_OFFSET
         : null;
     })(),
   );
   let samplingTime = $derived(
     (() => {
       let samplingTimeStr = selectedTaskInfo[0]?.sampling_time;
-      // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
+      // Local datetime hack for BokehJS
       return samplingTimeStr
-        ? Date.parse(samplingTimeStr) -
-            new Date().getTimezoneOffset() * 60 * 1000
+        ? samplingTimeStr.getTime() - LOCAL_TIME_OFFSET
         : null;
     })(),
   );
@@ -104,11 +106,13 @@
     let transformedData: any = {};
     columns.forEach((key) => {
       if (key === "datetime") {
-        let datetime = data.map((d: any) => Date.parse(d["datetime"]));
-        let timestamp = datetime.map((d: any) => new Date(d).toString());
-        // NOTE: JavaScript Date object does not have timezone info, so we need to add 8 hours to make it UTC+8
+        let datetime: number[] = data.map((d: any) =>
+          Date.parse(d["datetime"]),
+        );
+        let timestamp = datetime.map((d) => new Date(d).toString());
+        // Local datetime hack for BokehJS
         transformedData["datetime"] = datetime.map(
-          (d: number) => d - new Date().getTimezoneOffset() * 60 * 1000,
+          (d: number) => d - LOCAL_TIME_OFFSET,
         );
         transformedData["timestamp"] = timestamp;
       } else {
@@ -223,9 +227,9 @@
             data["timestamp"] = data["datetime"].map((d) =>
               new Date(d).toString(),
             );
-            // NOTE: Bokeh axis ticks hack
+            // BokehJS axis ticks hack
             data["datetime"] = data["datetime"].map(
-              (d) => (d as number) - new Date().getTimezoneOffset() * 60 * 1000,
+              (d) => (d as number) - LOCAL_TIME_OFFSET,
             );
             source = new ColumnDataSource({
               data: data,
@@ -261,10 +265,9 @@
             let row: { [key: string]: number | string | Date } = {};
             Object.keys(dataTable).forEach((key) => {
               if (key === "datetime") {
-                // The database stores datetime in local time,
-                // so we need to add local tz offset before storing it
-                row[key] = new Date(dataTable[key][i]).toUTCString();
-                console.log(row[key]);
+                row[key] = dateToISOString(
+                  new Date(dataTable[key][i]),
+                ) as string;
               } else {
                 row[key] = dataTable[key][i];
               }

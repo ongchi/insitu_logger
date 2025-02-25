@@ -45,17 +45,17 @@ export type TaskSummary = {
 export type TaskInfo = {
   id: number
   task_id: number
-  calibration: string
-  purging_time: string
-  water_level: number
-  pump_id: number
-  pump_depth: number
-  pump_freq: number
-  pump_rate: number
-  hose_setup: string
-  sampling_time: string
-  sample_wt_radium: number
-  comment: string
+  calibration: string | null
+  purging_time: Date | null
+  water_level: number | null
+  pump_id: number | null
+  pump_depth: number | null
+  pump_freq: number | null
+  pump_rate: number | null
+  hose_setup: string | null
+  sampling_time: Date | null
+  sample_wt_radium: number | null
+  comment: string | null
 }
 
 export type InSituLog = {
