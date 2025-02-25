@@ -350,7 +350,7 @@
               >
               <div class="flex flex-row gap-2">
                 <OptionSelector
-                  disabled={row === null}
+                  disabled={selectedTaskInfo.length === 0}
                   bind:value={selectedInfoId}
                   options={taskInfoList}
                   allowDeselect={false}
@@ -379,7 +379,7 @@
             <div class="grid min-w-[12em] gap-2">
               <Label>Minuted by</Label>
               <MultipleOptionSelector
-                disabled={row === null}
+                disabled={selectedTaskInfo.length === 0}
                 bind:value={selectedMinutedBy}
                 options={sharedOptions.people}
                 addItem={(id: string) => addPeopleToList("task_minuted_by", id)}
@@ -502,7 +502,7 @@
             <div class="grid min-w-[12em] items-center gap-2">
               <Label>Sampled by</Label>
               <MultipleOptionSelector
-                disabled={row === null}
+                disabled={selectedTaskInfo.length === 0}
                 bind:value={selectedSampledBy}
                 options={sharedOptions.people}
                 addItem={(id: string) => addPeopleToList("task_sampled_by", id)}
@@ -530,7 +530,8 @@
                 <Tooltip.Root>
                   <Tooltip.Trigger
                     class={buttonVariants({ variant: "ghost", size: "icon" })}
-                    disabled={row === null}
+                    disabled={selectedTaskInfo.length === 0 ||
+                      selectedTaskInfo[0]?.sampling_time === null}
                     onclick={printTags}
                   >
                     <Printer />
