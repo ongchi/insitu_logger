@@ -213,7 +213,7 @@
       let form = new FormData();
       form.append("log", file);
       axios
-        .post(`${apiUrl}/upload/sensor_log`, form)
+        .post(`${apiUrl}/sensor_log/upload`, form)
         .then((response) => {
           let logData: InSituLog = response.data;
           let dataTable = insitu_log_handler(logData);
@@ -306,17 +306,15 @@
       <LogEditMenu
         disabled={selectedTaskInfo.length == 0}
         onClearLogData={() => {
-          pgClient
-            .from("sensor_data")
-            .delete()
-            .eq("task_id", selectedTaskInfo[0]?.task_id)
-            .then(({ error }) => {
-              if (error) {
-                toast.error(error.message);
-              } else {
-                toast.success("Data cleared");
-                clearPlot();
-              }
+          axios
+            .delete(`${apiUrl}/sensor_log/${selectedTaskInfo[0]?.task_id}`)
+            .then(() => {
+              toast.success("Data cleared");
+              clearPlot();
+            })
+            .catch((error) => {
+              console.error(error);
+              toast.error("Failed to clear data");
             });
         }}
       />
