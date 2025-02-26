@@ -21,7 +21,7 @@
     fetch_data("pump", "id,name", (data: any) => {
       sharedOptions.pump = data;
     });
-    fetch_data("sample_type", "id,name", (data: any) => {
+    fetch_data("sample_type", "id,name,variant", (data: any) => {
       sharedOptions.sample_type = data;
     });
     fetch_data("task_summary", "*", (data: any) => {

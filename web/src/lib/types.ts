@@ -12,6 +12,7 @@ export type Pump = {
 export type SampleType = {
   id: number
   name: string
+  variant: string
 }
 
 export type People = {

@@ -5,6 +5,15 @@ export function get_name(id: number) {
   return sharedOptions.sample_type.find((s) => s.id === id)?.name!;
 };
 
+export function get_fullname(id: number) {
+  let _type = sharedOptions.sample_type.find(s => s.id === id);
+  let fullname = _type?.name;
+
+  if (_type?.variant) fullname += ` ${_type?.variant}`;
+
+  return fullname
+}
+
 export function get_id(name: string) {
   return sharedOptions.sample_type.find((s) => s.name === name)?.id!;
 };

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Input } from "$lib/components/ui/input/index.js";
   import { type SampleSet } from "$lib/types.ts";
-  import { get_simplified_set, get_name } from "./sample-set-utils.ts";
+  import { get_simplified_set, get_fullname } from "./sample-set-utils.ts";
   import { Check, X, Pencil } from "lucide-svelte";
   import * as Popover from "$lib/components/ui/popover/index.js";
   import EditMenu from "./sample-set-edit-menu.svelte";
@@ -60,7 +60,7 @@
           <Popover.Trigger disabled={isSaving}>
             <div class="flex flex-nowrap flex-row">
               <div class="text-nowrap border-l border-y my-1 rounded-l px-2">
-                {get_name(sample.id)}
+                {get_fullname(sample.id)}
               </div>
               <div
                 class="border-r border-y rounded-r my-1 px-1 bg-primary/50 text-primary-foreground"
@@ -82,7 +82,7 @@
         </Popover.Root>
       {:else}
         <div class="text-nowrap border-l border-y my-1 rounded-l px-2">
-          {get_name(sample.id)}
+          {get_fullname(sample.id)}
         </div>
         <div
           class="border-r border-y rounded-r my-1 px-1 bg-primary/50 text-primary-foreground"

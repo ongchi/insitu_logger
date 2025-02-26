@@ -70,7 +70,10 @@
         <DropdownMenu.Item
           onclick={() => {
             currentSet.push({ id: option.id, qty: 1 });
-          }}>{option.name}</DropdownMenu.Item
+          }}
+          >{option.variant
+            ? `${option.name} ${option.variant}`
+            : option.name}</DropdownMenu.Item
         >
       {/each}
     {/if}
