@@ -70,7 +70,7 @@ export function insitu_log_handler(log: InSituLog): { [key: string]: number[] } 
 
   columnNames.forEach((name, i) => {
     Object.keys(COLUMN_NAME_MAPPING).forEach(key => {
-      if (name === key || name.replace(/(\s?\([^\)]*\)$)/, '') === key) {
+      if (name === key || name.replace(/\s?\([^\)]*\)$/, '') === key) {
         sqlColNames.push(COLUMN_NAME_MAPPING[key]);
         let unit = name.replace(key, "").trim();
         if (unit === "") {

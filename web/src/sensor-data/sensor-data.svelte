@@ -21,7 +21,7 @@
     create_annotation_bounds,
     test_sampling_dataframe,
   } from "./test_function.ts";
-  import { insitu_log_handler } from "./csv-log-handler.ts";
+  import { insitu_log_handler } from "./sensor-log-handler.ts";
   import axios from "axios";
   import { type InSituLog } from "$lib/types.ts";
   import { dateToISOString } from "$lib/utils.ts";
@@ -211,9 +211,9 @@
     let file = (ev.target as HTMLInputElement).files?.[0];
     if (file) {
       let form = new FormData();
-      form.append("log_file", file);
+      form.append("log", file);
       axios
-        .post(`${apiUrl}/insitu_log`, form)
+        .post(`${apiUrl}/upload/sensor_log`, form)
         .then((response) => {
           let logData: InSituLog = response.data;
           let dataTable = insitu_log_handler(logData);

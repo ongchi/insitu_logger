@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { columns } from "./task-table-columns.js";
+  import { columns } from "./table-columns.js";
   import { type TaskSummary } from "$lib/types.ts";
   import { ChevronLeft, ChevronRight, Plus, Share } from "lucide-svelte";
   import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
@@ -28,7 +28,7 @@
   import { toast } from "svelte-sonner";
   import { fetch_data } from "$lib/utils.js";
   import DataTableActions from "./table-actions.svelte";
-  import { get_simplified_set } from "./sample-set-utils.js";
+  import { get_simplified_set } from "./sample-set-cell/sample-set-utils.js";
   import SamplingTimeRangePicker from "./sampling-time-range-picker.svelte";
   import type { DateRange } from "bits-ui";
 

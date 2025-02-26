@@ -13,7 +13,7 @@
   import TaskInfoEditMenu from "./edit-menu.svelte";
   import MultipleOptionSelector from "$lib/multiple-option-selector.svelte";
   import { Printer } from "lucide-svelte";
-  import { get_name as get_sample_name } from "../task-table/sample-set-utils.ts";
+  import { get_name as get_sample_name } from "../task-table/sample-set-cell/sample-set-utils.ts";
   import jsPDF from "jspdf";
   import { NotoSansTC } from "$lib/NotoSansTC-Regular-normal.js";
   import { buttonVariants } from "$lib/components/ui/button/index.js";
