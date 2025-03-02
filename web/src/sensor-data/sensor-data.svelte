@@ -2,11 +2,7 @@
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
   import LogEditMenu from "./log-edit-menu.svelte";
-  import {
-    pgClient,
-    selectedTaskInfo,
-    apiUrl,
-  } from "$lib/shared-variables.svelte";
+  import { selectedTaskInfo } from "$lib/shared-variables.svelte";
   import { toast } from "svelte-sonner";
   import { ColumnDataSource } from "@bokeh/bokehjs";
   import {
@@ -22,9 +18,9 @@
     test_sampling_dataframe,
   } from "./test_function.ts";
   import { insitu_log_handler } from "./sensor-log-handler.ts";
-  import axios from "axios";
   import { type InSituLog } from "$lib/types.ts";
   import { dateToISOString } from "$lib/utils.ts";
+  import { ApiClient } from "$lib/api-client";
 
   // Local datetime hack for BokehJS
   let LOCAL_TIME_OFFSET = new Date().getTimezoneOffset() * 60 * 1000;
@@ -32,7 +28,7 @@
   let SQL_TO_FULL_COLUMN_NAME: { [id: string]: string } = {
     datetime: "Date and Time",
     cndct: "Actual Conductivity (µS/cm)",
-    temp: "Temperature (C)",
+    temp_internal: "Temperature (C)",
     spcndct: "Specific Conductivity (µS/cm)",
     sa: "Salinity (PSU)",
     resis: "Resistivity (ohm-cm)",
@@ -45,7 +41,7 @@
     do_con: "Dissolved Oxygen (concentration) (mg/L)",
     do_sat: "Dissolved Oxygen (%saturation) (%Sat)",
     ppo2: "Partial Pressure Oxygen (Torr)",
-    temp2: "Temperature (C).1",
+    temp_sensor: "Temperature (C).1",
     v: "External Voltage (V)",
     batt: "Battery Percentage (%)",
     pres_baro: "Barometric Pressure (PSI)",
@@ -81,19 +77,12 @@
     if (selectedTaskInfo.length > 0) {
       clearPlot();
       let currentTaskId = selectedTaskInfo[0]?.task_id;
-      pgClient
-        .from("sensor_data")
-        .select(columns.join(","))
-        .eq("task_id", currentTaskId)
-        .order("datetime")
-        .then(({ data, error }) => {
-          if (error) {
-            toast.error(error.message);
-          } else if (data.length > 0) {
-            source = createColumnDataSource(data);
-            createGridPlot(source);
-          }
-        });
+      ApiClient.get(`/api/task/${currentTaskId}/sensor`, (data) => {
+        if (data.length > 0) {
+          source = createColumnDataSource(data);
+          createGridPlot(source);
+        }
+      });
     }
   });
 
@@ -212,82 +201,62 @@
     if (file) {
       let form = new FormData();
       form.append("log", file);
-      axios
-        .post(`${apiUrl}/sensor_log/upload`, form)
-        .then((response) => {
-          let logData: InSituLog = response.data;
-          let dataTable = insitu_log_handler(logData);
+      ApiClient.post(`/sensor_log/upload`, form, (data) => {
+        let dataTable = insitu_log_handler(data as InSituLog);
 
-          if (dataTable) {
-            uploadData(dataTable);
+        if (dataTable) {
+          uploadData(dataTable);
 
-            let data: { [key: string]: (number | string | Date)[] } = {
-              ...dataTable,
-            };
-            data["timestamp"] = data["datetime"].map((d) =>
-              new Date(d).toString(),
-            );
-            // BokehJS axis ticks hack
-            data["datetime"] = data["datetime"].map(
-              (d) => (d as number) - LOCAL_TIME_OFFSET,
-            );
-            source = new ColumnDataSource({
-              data: data,
-            });
-            clearPlot();
-            createGridPlot(source);
-          }
-        })
-        .catch((error) => console.error(error))
-        .finally(() => {
-          (ev.target as HTMLInputElement).value = "";
-        });
+          let data: { [key: string]: (number | string | Date)[] } = {
+            ...dataTable,
+          };
+          data["timestamp"] = data["datetime"].map((d) =>
+            new Date(d).toString(),
+          );
+          // BokehJS axis ticks hack
+          data["datetime"] = data["datetime"].map(
+            (d) => (d as number) - LOCAL_TIME_OFFSET,
+          );
+          source = new ColumnDataSource({
+            data: data,
+          });
+          clearPlot();
+          createGridPlot(source);
+        }
+      }).finally(() => {
+        (ev.target as HTMLInputElement).value = "";
+      });
     }
   }
 
   function uploadData(dataTable: { [key: string]: number[] }) {
     let currentTaskId = selectedTaskInfo[0]?.task_id;
 
-    pgClient
-      .from("sensor_data")
-      .select("datetime")
-      .eq("task_id", currentTaskId)
-      .order("datetime", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) {
-          toast.error(error.message);
-        } else {
-          let lastDataTime = data.length > 0 ? Date.parse(data[0].datetime) : 0;
-          let stIdx = dataTable["datetime"].findIndex((d) => d > lastDataTime);
+    ApiClient.get(
+      `/api/task/${currentTaskId}/sensor/last_timestamp`,
+      (data) => {
+        let lastDataTime = data ? Date.parse(data) : 0;
+        let stIdx = dataTable["datetime"].findIndex((d) => d > lastDataTime);
 
-          let filteredData: { [key: string]: number | string | Date }[] = [];
-          for (let i = stIdx; i < dataTable["datetime"].length; i++) {
-            let row: { [key: string]: number | string | Date } = {};
-            Object.keys(dataTable).forEach((key) => {
-              if (key === "datetime") {
-                row[key] = dateToISOString(
-                  new Date(dataTable[key][i]),
-                ) as string;
-              } else {
-                row[key] = dataTable[key][i];
-              }
-            });
-            row["task_id"] = currentTaskId;
-            filteredData.push(row);
-          }
-
-          pgClient
-            .from("sensor_data")
-            .insert(filteredData)
-            .then(({ error }) => {
-              if (error) {
-                toast.error(error.message);
-              } else {
-                toast.success("Data uploaded");
-              }
-            });
+        let filteredData: { [key: string]: number | string | Date }[] = [];
+        for (let i = stIdx; i < dataTable["datetime"].length; i++) {
+          let row: { [key: string]: number | string | Date } = {};
+          Object.keys(dataTable).forEach((key) => {
+            if (key === "datetime") {
+              row[key] = dateToISOString(new Date(dataTable[key][i])) as string;
+            } else {
+              row[key] = dataTable[key][i];
+            }
+          });
+          row["task_id"] = currentTaskId;
+          filteredData.push(row);
         }
-      });
+
+        ApiClient.post(`/api/task/${currentTaskId}/sensor`, filteredData, (_) =>
+          toast.success("Data uploaded"),
+        );
+      },
+    );
   }
 </script>
 
@@ -306,16 +275,13 @@
       <LogEditMenu
         disabled={selectedTaskInfo.length == 0}
         onClearLogData={() => {
-          axios
-            .delete(`${apiUrl}/sensor_log/${selectedTaskInfo[0]?.task_id}`)
-            .then(() => {
+          ApiClient.delete(
+            `/api/task/${selectedTaskInfo[0]?.task_id}/sensor`,
+            (_) => {
               toast.success("Data cleared");
               clearPlot();
-            })
-            .catch((error) => {
-              console.error(error);
-              toast.error("Failed to clear data");
-            });
+            },
+          );
         }}
       />
     </div>

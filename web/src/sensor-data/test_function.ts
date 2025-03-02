@@ -1,6 +1,6 @@
 export const criteria: { [id: string]: string } = {
-  temp: "0.2",
-  temp2: "0.2",
+  temp_internal: "0.2",
+  temp_sensor: "0.2",
   cndct: "3%",
   spcndct: "3%",
   ph: "0.1",

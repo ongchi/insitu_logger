@@ -1,9 +1,12 @@
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("SQL error")]
     Sqlx(#[from] sqlx::Error),
+    #[error("invalid JSON")]
+    Json(#[from] serde_json::Error),
     #[error("an internal error occurred")]
     Anyhow(#[from] anyhow::Error),
     #[error("failed to parse log data")]
@@ -15,15 +18,19 @@ impl IntoResponse for Error {
         match self {
             Error::Sqlx(e) => {
                 tracing::error!("SQL error: {:?}", e);
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR.into_response()
+                (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+            }
+            Error::Json(e) => {
+                tracing::error!("Invalid JSON: {:?}", e);
+                (StatusCode::BAD_REQUEST, e.to_string()).into_response()
             }
             Error::Anyhow(e) => {
                 tracing::error!("Internal error: {:?}", e);
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR.into_response()
+                (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
             }
             Error::InSitulog(e) => {
                 tracing::error!("failed to parse log data: {:?}", e);
-                axum::http::StatusCode::BAD_REQUEST.into_response()
+                (StatusCode::BAD_REQUEST, e.to_string()).into_response()
             }
         }
     }

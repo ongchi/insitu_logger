@@ -1,5 +1,12 @@
 pub mod error;
+pub mod people;
+pub mod pump;
+pub mod sample_type;
 pub mod sensor_data;
+pub mod serde;
+pub mod task;
+pub mod task_info;
+pub mod well;
 
 use sqlx::sqlite::SqlitePool;
 

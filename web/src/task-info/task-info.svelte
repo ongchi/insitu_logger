@@ -4,12 +4,10 @@
   import {
     selectedTask,
     selectedTaskInfo,
-    pgClient,
     sharedOptions,
   } from "$lib/shared-variables.svelte";
   import OptionSelector from "$lib/option-selector.svelte";
   import Editor from "$lib/editor/index.svelte";
-  import { toast } from "svelte-sonner";
   import TaskInfoEditMenu from "./edit-menu.svelte";
   import MultipleOptionSelector from "$lib/multiple-option-selector.svelte";
   import { Printer } from "lucide-svelte";
@@ -19,6 +17,7 @@
   import { buttonVariants } from "$lib/components/ui/button/index.js";
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { localDateStringToISOString, dateToLocalString } from "$lib/utils.ts";
+  import { ApiClient } from "$lib/api-client";
 
   let row = $derived(selectedTask.length > 0 ? selectedTask[0] : null);
   let taskInfoList: { id: number; name: string }[] = $state([]);
@@ -29,41 +28,25 @@
 
   // Fetch task info id when row is selected
   function fetchTaskInfoIds(task_id: number) {
-    pgClient
-      .from("task_info")
-      .select("id")
-      .order("id", { ascending: false })
-      .eq("task_id", task_id)
-      .then(({ data, error }) => {
-        if (error) {
-          taskInfoList = [];
-          selectedInfoId = 0;
-        } else {
-          taskInfoList = data.map((d) => {
-            return { id: d.id, name: d.id };
-          });
-          selectedInfoId = taskInfoList.length > 0 ? taskInfoList[0].id : 0;
-        }
-      });
+    ApiClient.get(
+      `/api/task/${task_id}/info`,
+      (data) => {
+        taskInfoList = data.map((d: any) => {
+          return { id: d.id, name: d.id };
+        });
+        selectedInfoId = taskInfoList.length > 0 ? taskInfoList[0].id : 0;
+      },
+      (_) => {
+        taskInfoList = [];
+        selectedInfoId = 0;
+      },
+    );
   }
-
-  function fetchPeople(
-    table: string,
-    id: number,
-    callback: (data: any) => void,
-  ) {
-    pgClient
-      .from(table)
-      .select("people_id")
-      .order("people_id", { ascending: true })
-      .eq("task_info_id", id)
-      .then(({ data, error }) => {
-        if (error) {
-          toast.error(error.message);
-        } else {
-          callback(data);
-        }
-      });
+  function fetchPeople(table: string, onSuccess: (data: any) => void) {
+    ApiClient.get(
+      `/api/task/${row?.id}/info/${selectedInfoId}/${table}`,
+      onSuccess,
+    );
   }
 
   function clearVars() {
@@ -86,30 +69,22 @@
   // Fetch task info when selectedInfoId changes
   $effect(() => {
     if (selectedInfoId !== 0) {
-      pgClient
-        .from("task_info")
-        .select("*")
-        .eq("id", selectedInfoId)
-        .then(({ data, error }) => {
-          if (error) {
-            clearVars();
-          } else {
-            selectedTaskInfo.pop();
-            let { purging_time, sampling_time, ...info } = data[0];
-            selectedTaskInfo.push({
-              purging_time: purging_time ? new Date(purging_time) : null,
-              sampling_time: sampling_time ? new Date(sampling_time) : null,
-              ...info,
-            });
-            currentPumpDepth = findPumpDepth(data[0].hose_setup);
-            fetchPeople("task_minuted_by", selectedInfoId, (data) => {
-              selectedMinutedBy = data.map((d: any) => d.people_id.toString());
-            });
-            fetchPeople("task_sampled_by", selectedInfoId, (data) => {
-              selectedSampledBy = data.map((d: any) => d.people_id.toString());
-            });
-          }
+      ApiClient.get(`/api/task/${row?.id}/info`, (data) => {
+        selectedTaskInfo.pop();
+        let { purging_time, sampling_time, ...info } = data[0];
+        selectedTaskInfo.push({
+          purging_time: purging_time ? new Date(purging_time) : null,
+          sampling_time: sampling_time ? new Date(sampling_time) : null,
+          ...info,
         });
+        currentPumpDepth = findPumpDepth(data[0].hose_setup);
+        fetchPeople("minuted_by", (data) => {
+          selectedMinutedBy = data.map((d: any) => d.people_id.toString());
+        });
+        fetchPeople("sampled_by", (data) => {
+          selectedSampledBy = data.map((d: any) => d.people_id.toString());
+        });
+      });
     } else {
       clearVars();
     }
@@ -121,52 +96,59 @@
     }
     let { id, ...newTaskInfo } =
       selectedTaskInfo.length === 0 ? { task_id: row.id } : selectedTaskInfo[0];
-    pgClient
-      .from("task_info")
-      .insert(newTaskInfo)
-      .then(({ error }) => {
-        if (error) {
-          toast.error(error.message);
-        } else {
-          fetchTaskInfoIds(row.id);
-        }
-      });
+    ApiClient.put(`/api/task/${row.id}/info`, newTaskInfo, (_) =>
+      fetchTaskInfoIds(row.id),
+    );
   }
 
   function deleteTaskInfo() {
     if (row === null) {
       return;
     }
-    pgClient
-      .from("task_info")
-      .delete()
-      .eq("id", selectedInfoId)
-      .then(({ error }) => {
-        if (error) {
-          toast.error(error.message);
-        } else {
-          fetchTaskInfoIds(row.id);
-        }
-      });
+    ApiClient.delete(`/api/task/${row.id}/info/${selectedInfoId}`, (_) =>
+      fetchTaskInfoIds(row.id),
+    );
   }
 
   let updateTimeOut: number;
   function _updateTaskInfo(field: string, value: any) {
+    if (field === "sampling_time" || field === "purging_time") {
+      value = localDateStringToISOString(value);
+    }
+    value = value != null ? value : null;
+
     if (
       selectedTaskInfo.length > 0 &&
-      (selectedTaskInfo[0] as any)[field] != value
+      (selectedTaskInfo[0] as any)[field] !== value
     ) {
-      pgClient
-        .from("task_info")
-        .update({ [field]: value == "" ? null : value })
-        .eq("id", selectedInfoId)
-        .then(({ error }) => {
-          if (error) {
-            toast.error(error.message);
-          } else {
-            (selectedTaskInfo[0] as any)[field] = value;
-          }
-        });
+      ApiClient.patch(
+        `/api/task/${row?.id}/info/${selectedInfoId}`,
+        { [field]: value },
+        (_) => {
+          let newValue = (() => {
+            if (field === "sampling_time" || field === "purging_time") {
+              return value ? new Date(value) : null;
+            } else if (
+              field in
+              [
+                "id",
+                "task_id",
+                "water_level",
+                "pump_id",
+                "pump_depth",
+                "pump_freq",
+                "pump_rate",
+                "sample_wt_radium",
+              ]
+            ) {
+              return value ? parseFloat(value) : null;
+            } else {
+              return value;
+            }
+          })();
+          (selectedTaskInfo[0] as any)[field] = newValue;
+        },
+      );
     }
   }
 
@@ -176,14 +158,7 @@
     }
     updateTimeOut = setTimeout(() => {
       if (ev.target) {
-        if (field === "sampling_time" || field === "purging_time") {
-          _updateTaskInfo(
-            field,
-            localDateStringToISOString((ev.target as HTMLInputElement).value),
-          );
-        } else {
-          _updateTaskInfo(field, (ev.target as HTMLInputElement).value);
-        }
+        _updateTaskInfo(field, (ev.target as HTMLInputElement).value);
       }
     }, 300);
   }
@@ -221,117 +196,99 @@
   }
 
   function addPeopleToList(table: string, people_id: string) {
-    pgClient
-      .from(table)
-      .insert({ task_info_id: selectedInfoId, people_id })
-      .then(({ error }) => {
-        if (error) {
-          toast.error(error.message);
-        }
-      });
+    ApiClient.put(`/api/task/${row?.id}/info/${selectedInfoId}/${table}`, {
+      id: parseInt(people_id),
+    });
   }
 
   function removePeopleFromList(table: string, people_id: string) {
-    pgClient
-      .from(table)
-      .delete()
-      .eq("task_info_id", selectedInfoId)
-      .eq("people_id", people_id)
-      .then(({ error }) => {
-        if (error) {
-          toast.error(error.message);
-        }
-      });
+    ApiClient.delete(
+      `/api/task/${row?.id}/info/${selectedInfoId}/${table}/${people_id}`,
+    );
   }
 
   function printTags() {
-    pgClient
-      .from("sample_set")
-      .select("sample_type_id,qty")
-      .order("sample_type_id", { ascending: true })
-      .eq("task_id", selectedTaskInfo[0]?.task_id)
-      .then(({ data, error }) => {
-        if (error) {
-          toast.error(error.message);
+    ApiClient.get(
+      `/api/task/${selectedTaskInfo[0]?.task_id}/sample_set`,
+      (data) => {
+        let datetime = selectedTaskInfo[0].sampling_time;
+
+        if (datetime === null) return;
+
+        let well_type = sharedOptions.well.find(
+          (w) => w.id == selectedTask[0].well_id,
+        )?.type;
+
+        let serial;
+        if (well_type === "BLANK") {
+          serial = "BLANK";
         } else {
-          let datetime = selectedTaskInfo[0].sampling_time;
+          serial = `#${selectedTask[0].serial}`;
+        }
 
-          if (datetime === null) return;
-
-          let well_type = sharedOptions.well.find(
-            (w) => w.id == selectedTask[0].well_id,
-          )?.type;
-
-          let serial;
-          if (well_type === "BLANK") {
-            serial = "BLANK";
+        let well_depth;
+        if (well_type === "BLANK") {
+          well_depth = selectedTask[0].depth;
+        } else {
+          let conj;
+          if (well_type === "SW") {
+            conj = "_";
           } else {
-            serial = `#${selectedTask[0].serial}`;
+            conj = "@";
           }
+          well_depth = `${
+            sharedOptions.well.find((w) => w.id == selectedTask[0].well_id)
+              ?.name as string
+          }${conj}${selectedTask[0].depth}`;
+        }
 
-          let well_depth;
-          if (well_type === "BLANK") {
-            well_depth = selectedTask[0].depth;
-          } else {
-            let conj;
-            if (well_type === "SW") {
-              conj = "_";
-            } else {
-              conj = "@";
-            }
-            well_depth = `${
-              sharedOptions.well.find((w) => w.id == selectedTask[0].well_id)
-                ?.name as string
-            }${conj}${selectedTask[0].depth}`;
-          }
+        // Convert datetime to string with format YYYYMMDD HH:mm
+        let datetime_str = `${datetime.getFullYear()}-${(
+          "0" +
+          (datetime.getMonth() + 1)
+        ).slice(-2)}-${("0" + datetime.getDate()).slice(-2)} ${(
+          "0" + datetime.getHours()
+        ).slice(-2)}:${("0" + datetime.getMinutes()).slice(-2)}`;
 
-          // Convert datetime to string with format YYYYMMDD HH:mm
-          let datetime_str = `${datetime.getFullYear()}-${(
-            "0" +
-            (datetime.getMonth() + 1)
-          ).slice(-2)}-${("0" + datetime.getDate()).slice(-2)} ${(
-            "0" + datetime.getHours()
-          ).slice(-2)}:${("0" + datetime.getMinutes()).slice(-2)}`;
+        const doc = new jsPDF({
+          orientation: "landscape",
+          unit: "mm",
+          format: [42, 18],
+        });
+        doc.addFileToVFS("NotoSansTC-Regular-normal.ttf", NotoSansTC);
+        doc.addFont("NotoSansTC-Regular-normal.ttf", "NotoSansTC", "normal");
+        doc.setFont("NotoSansTC");
+        doc.setFontSize(10);
 
-          const doc = new jsPDF({
-            orientation: "landscape",
-            unit: "mm",
-            format: [42, 18],
-          });
-          doc.addFileToVFS("NotoSansTC-Regular-normal.ttf", NotoSansTC);
-          doc.addFont("NotoSansTC-Regular-normal.ttf", "NotoSansTC", "normal");
-          doc.setFont("NotoSansTC");
-          doc.setFontSize(10);
-
-          let pdfPages = 0;
-          data.forEach((sample: { sample_type_id: number; qty: number }) => {
-            let name = get_sample_name(sample.sample_type_id);
-            if (sample.qty > 1) {
-              for (let i = 1; i <= sample.qty; i++) {
-                if (pdfPages > 0) {
-                  doc.addPage([42, 18]);
-                }
-                doc.text(serial, 4, 5.5);
-                doc.text(well_depth, 4, 10.5);
-                doc.text(datetime_str, 4, 15.5);
-                doc.text(`${name} (${i})`, 22, 5.5);
-                pdfPages++;
-              }
-            } else {
+        let pdfPages = 0;
+        data.forEach((sample: { id: number; qty: number }) => {
+          let name = get_sample_name(sample.id);
+          if (sample.qty > 1) {
+            for (let i = 1; i <= sample.qty; i++) {
               if (pdfPages > 0) {
                 doc.addPage([42, 18]);
               }
               doc.text(serial, 4, 5.5);
               doc.text(well_depth, 4, 10.5);
               doc.text(datetime_str, 4, 15.5);
-              doc.text(name, 22, 5.5);
+              doc.text(`${name} (${i})`, 22, 5.5);
               pdfPages++;
             }
-          });
+          } else {
+            if (pdfPages > 0) {
+              doc.addPage([42, 18]);
+            }
+            doc.text(serial, 4, 5.5);
+            doc.text(well_depth, 4, 10.5);
+            doc.text(datetime_str, 4, 15.5);
+            doc.text(name, 22, 5.5);
+            pdfPages++;
+          }
+        });
 
-          doc.output("dataurlnewwindow");
-        }
-      });
+        doc.output("dataurlnewwindow");
+      },
+    );
   }
 </script>
 
@@ -382,9 +339,9 @@
                 disabled={selectedTaskInfo.length === 0}
                 bind:value={selectedMinutedBy}
                 options={sharedOptions.people}
-                addItem={(id: string) => addPeopleToList("task_minuted_by", id)}
+                addItem={(id: string) => addPeopleToList("minuted_by", id)}
                 deleteItem={(id: string) =>
-                  removePeopleFromList("task_minuted_by", id)}
+                  removePeopleFromList("minuted_by", id)}
               ></MultipleOptionSelector>
             </div>
 
@@ -505,9 +462,9 @@
                 disabled={selectedTaskInfo.length === 0}
                 bind:value={selectedSampledBy}
                 options={sharedOptions.people}
-                addItem={(id: string) => addPeopleToList("task_sampled_by", id)}
+                addItem={(id: string) => addPeopleToList("sampled_by", id)}
                 deleteItem={(id: string) =>
-                  removePeopleFromList("task_sampled_by", id)}
+                  removePeopleFromList("sampled_by", id)}
               ></MultipleOptionSelector>
             </div>
 

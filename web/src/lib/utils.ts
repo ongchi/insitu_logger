@@ -1,7 +1,5 @@
 import { type ClassValue, clsx } from 'clsx'
-import { toast } from 'svelte-sonner'
 import { twMerge } from 'tailwind-merge'
-import { pgClient } from '$lib/shared-variables.svelte.ts'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -16,7 +14,7 @@ export function localDateStringToISOString(dateString: string | null): string | 
   if (dateString == null || dateString == '') {
     return null
   } else {
-    let ret = new Date(dateString).toISOString();
+    let ret = dateToISOString(new Date(dateString));
     return ret
   }
 }
@@ -58,20 +56,6 @@ export function dateToLocalString(date: Date | null): string | null {
     ':' + pad(dateCopy.getUTCMinutes()) +
     ':' + pad(dateCopy.getUTCSeconds()) +
     '.' + (dateCopy.getUTCMilliseconds() / 1000).toFixed(3).slice(2, 5);
-}
-
-export function fetch_data(table: string, columns: string, callback: Function) {
-  pgClient
-    .from(table)
-    .select(columns)
-    .then(({ data, error }) => {
-      if (error) {
-        toast.error(error.message)
-        console.error(`Error fetching ${table} data:`, error)
-      } else {
-        callback(data)
-      }
-    })
 }
 
 export function findMonday(d: Date) {

@@ -3,7 +3,7 @@ import { type InSituLog } from "$lib/types.ts";
 let COLUMN_NAME_MAPPING: { [key: string]: string } = {
   // csv log column names
   "Date/Time": "datetime",
-  "Temp": "temp",
+  "Temp": "temp_internal",
   "Pres": "pres",
   "Depth": "depth",
   "CNDCT": "cndct",
@@ -20,7 +20,7 @@ let COLUMN_NAME_MAPPING: { [key: string]: string } = {
   "R": "resis",
   // txt dump column names
   "Date and Time": "datetime",
-  "Temperature": "temp",
+  "Temperature": "temp_internal",
   "External Voltage": "v",
   "Battery Percentage (%)": "batt",
   "Barometric Pressure": "pres_baro",

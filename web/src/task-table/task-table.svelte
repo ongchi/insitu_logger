@@ -19,18 +19,14 @@
     createSvelteTable,
     FlexRender,
   } from "$lib/components/ui/data-table/index.js";
-  import {
-    sharedOptions,
-    pgClient,
-    selectedTask,
-  } from "$lib/shared-variables.svelte";
+  import { sharedOptions, selectedTask } from "$lib/shared-variables.svelte";
   import OptionSelector from "$lib/option-selector.svelte";
   import { toast } from "svelte-sonner";
-  import { fetch_data } from "$lib/utils.js";
   import DataTableActions from "./table-actions.svelte";
   import { get_simplified_set } from "./sample-set-cell/sample-set-utils.js";
   import SamplingTimeRangePicker from "./sampling-time-range-picker.svelte";
   import type { DateRange } from "bits-ui";
+  import { ApiClient } from "$lib/api-client.js";
 
   let { data }: { data: TaskSummary[] } = $props();
 
@@ -92,36 +88,30 @@
 
   let popoverOpen = $state(false);
   function handleAddTask() {
-    pgClient
-      .from("task")
-      .insert({ well_id: well_id, depth: depth })
-      .then(({ error }) => {
-        if (error) {
-          toast.error(error.message);
-          console.error(error);
-        } else {
-          popoverOpen = false;
-          fetch_data("task_summary", "*", (task_data: any) => {
-            data = task_data;
-          });
-        }
+    ApiClient.put("/api/task", { well_id, depth }, (_) => {
+      popoverOpen = false;
+      ApiClient.get("/api/task/summary", (task_data: any) => {
+        data = task_data.map((d: any) => {
+          if (d.sample_set == null) {
+            d.sample_set = [];
+          } else {
+            d.sample_set = JSON.parse(d.sample_set);
+          }
+          if (d.sampling_time != null) {
+            d.sampling_time = new Date(d.sampling_time);
+          }
+          return d;
+        });
       });
+    });
   }
 
   function onDeleteRow(id: string) {
-    pgClient
-      .from("task")
-      .delete()
-      .eq("id", id)
-      .then(({ error }) => {
-        if (error) {
-          toast.error(error.message);
-        } else {
-          data = data.filter((row: any) => row.id !== id);
-          table.setRowSelection({});
-          toast.success("Task deleted");
-        }
-      });
+    ApiClient.delete(`/api/task/${id}`, (_) => {
+      data = data.filter((row: any) => row.id != id);
+      table.setRowSelection({});
+      toast.success("Task deleted");
+    });
   }
 
   function exportTaskData() {

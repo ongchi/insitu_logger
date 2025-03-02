@@ -11,11 +11,10 @@
   import { RangeCalendar } from "$lib/components/ui/range-calendar/index.js";
   import * as Popover from "$lib/components/ui/popover/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
-  import { pgClient } from "$lib/shared-variables.svelte";
-  import { toast } from "svelte-sonner";
   import { findMonday } from "$lib/utils.js";
   import { CalendarDate } from "@internationalized/date";
   import { onMount } from "svelte";
+  import { ApiClient } from "$lib/api-client";
 
   let {
     onValueChange,
@@ -32,28 +31,21 @@
   let startValue: DateValue | undefined = $state(undefined);
 
   function initValue() {
-    pgClient
-      .from("task_info")
-      .select("sampling_time")
-      .order("sampling_time", { ascending: false })
-      .not("sampling_time", "is", null)
-      .limit(1)
-      .then(({ data, error }) => {
-        if (error) {
-          toast.error(error.message);
-        } else {
-          let lastTimeStamp = data[0]?.sampling_time;
-          let monday = findMonday(new Date(lastTimeStamp));
-          let start = new CalendarDate(
-            monday.getFullYear(),
-            monday.getMonth() + 1,
-            monday.getDate(),
-          );
-          let end = start.add({ days: 4 });
-          value = { start, end };
-          onValueChange(value);
-        }
-      });
+    ApiClient.get("/api/task/last_timestamp", (lastTimestamp) => {
+      if (lastTimestamp) {
+        let monday = findMonday(new Date(lastTimestamp));
+        let start = new CalendarDate(
+          monday.getFullYear(),
+          monday.getMonth() + 1,
+          monday.getDate(),
+        );
+        let end = start.add({ days: 4 });
+        value = { start, end };
+        onValueChange(value);
+      } else {
+        value = undefined;
+      }
+    });
   }
 
   onMount(() => {

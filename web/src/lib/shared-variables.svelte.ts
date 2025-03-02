@@ -1,5 +1,4 @@
 import { type OptionsData, type TaskSummary, type TaskInfo } from './types.ts'
-import { PostgrestClient } from '@supabase/postgrest-js'
 
 export const sharedOptions: OptionsData = $state({
   well: [],
@@ -12,14 +11,6 @@ export const selectedTask: TaskSummary[] = $state([])
 export const selectedTaskInfo: TaskInfo[] = $state([])
 
 export const apiUrl = (import.meta as any).env.VITE_API_URL
-export const postgrestUrl = (import.meta as any).env.VITE_POSTGREST_ROOT
-export const postgrestToken = (import.meta as any).env.VITE_POSTGREST_TOKEN
-
-export const pgClient: PostgrestClient = $state(
-  new PostgrestClient(postgrestUrl, {
-    headers: { Authorization: `Bearer ${postgrestToken}` },
-  })
-)
 
 export const setS = [
   { name: 'Trace', qty: 1 },
@@ -42,7 +33,7 @@ export const setL = [
   { name: 'I-', qty: 2 },
   { name: 'Ra', qty: 1 },
   { name: 'Sr Isotope', qty: 1 },
-  { name: 'SO4 5L', qty: 1 },
+  { name: 'SO4', qty: 1 },
   { name: '真空瓶', qty: 1 },
   { name: '血清瓶', qty: 2 },
 ]
