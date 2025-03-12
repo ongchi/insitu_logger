@@ -102,6 +102,9 @@
           }
           return d;
         });
+        // Reset row selection
+        table.setRowSelection({});
+        selectedTask.pop();
       });
     });
   }
