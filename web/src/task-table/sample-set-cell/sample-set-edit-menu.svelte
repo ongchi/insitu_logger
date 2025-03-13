@@ -1,9 +1,9 @@
 <script lang="ts">
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { Plus, Eraser } from "lucide-svelte";
-  import { sharedOptions, setS, setL } from "$lib/shared-variables.svelte.ts";
+  import { sharedOptions } from "$lib/shared-variables.svelte.ts";
   import { type SampleSet } from "$lib/types.ts";
-  import { get_id } from "./sample-set-utils.ts";
+  import { get_id, preset } from "./sample-set-utils.ts";
   import { buttonVariants } from "$lib/components/ui/button/index.js";
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
 
@@ -55,16 +55,13 @@
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     {#if currentSet === null || currentSet.length == 0}
-      <DropdownMenu.Item
-        onclick={() => {
-          createSet(setS);
-        }}>小褔</DropdownMenu.Item
-      >
-      <DropdownMenu.Item
-        onclick={() => {
-          createSet(setL);
-        }}>大褔</DropdownMenu.Item
-      >
+      {#each preset as item}
+        <DropdownMenu.Item
+          onclick={() => {
+            createSet(item.content);
+          }}>{item.name}</DropdownMenu.Item
+        >
+      {/each}
     {:else}
       {#each dropdownOptions as option}
         <DropdownMenu.Item

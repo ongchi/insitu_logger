@@ -3,12 +3,12 @@ use std::io::Cursor;
 use axum::extract::{Extension, Multipart, Path};
 use axum::Json;
 use chrono::NaiveDateTime;
-use insitu_log_reader::{InSituLogError, InSituLogReader};
+use aqua_troll_log_reader::{AquaTrollLogError, AquaTrollLogReader};
 use serde::{Deserialize, Serialize};
 
 use super::{ApiContext, Error};
 
-pub async fn insitu_log_handler(mut multipart: Multipart) -> Result<Json<InSituLogReader>, Error> {
+pub async fn insitu_log_handler(mut multipart: Multipart) -> Result<Json<AquaTrollLogReader>, Error> {
     let log = if let Some(field) = multipart.next_field().await.unwrap() {
         let file_name = field.file_name().unwrap_or("").to_string();
         let data = field.bytes().await.unwrap();
@@ -17,13 +17,13 @@ pub async fn insitu_log_handler(mut multipart: Multipart) -> Result<Json<InSituL
         let mut reader = Cursor::new(data);
 
         match ext {
-            "csv" => InSituLogReader::from_csv(&mut reader)?,
-            "txt" => InSituLogReader::from_txt(&mut reader)?,
-            "zip" => InSituLogReader::from_zipped_html(&mut reader)?,
-            _ => return Err(InSituLogError::InvalidData)?,
+            "csv" => AquaTrollLogReader::from_csv(&mut reader)?,
+            "txt" => AquaTrollLogReader::from_txt(&mut reader)?,
+            "zip" => AquaTrollLogReader::from_zipped_html(&mut reader)?,
+            _ => return Err(AquaTrollLogError::InvalidData)?,
         }
     } else {
-        return Err(InSituLogError::InvalidData)?;
+        return Err(AquaTrollLogError::InvalidData)?;
     };
 
     Ok(Json(log))

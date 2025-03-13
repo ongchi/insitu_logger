@@ -10,7 +10,7 @@ pub enum Error {
     #[error("an internal error occurred")]
     Anyhow(#[from] anyhow::Error),
     #[error("failed to parse log data")]
-    InSitulog(#[from] insitu_log_reader::InSituLogError),
+    AquaTrollLog(#[from] aqua_troll_log_reader::AquaTrollLogError),
 }
 
 impl IntoResponse for Error {
@@ -28,7 +28,7 @@ impl IntoResponse for Error {
                 tracing::error!("Internal error: {:?}", e);
                 (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
             }
-            Error::InSitulog(e) => {
+            Error::AquaTrollLog(e) => {
                 tracing::error!("failed to parse log data: {:?}", e);
                 (StatusCode::BAD_REQUEST, e.to_string()).into_response()
             }

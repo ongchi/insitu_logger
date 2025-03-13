@@ -1,94 +1,141 @@
-import { type SampleSet } from "$lib/types.ts";
-import { sharedOptions, setS } from "$lib/shared-variables.svelte.ts";
+import { type SampleSet } from '$lib/types.ts'
+import { sharedOptions } from '$lib/shared-variables.svelte.ts'
+
+export const preset = [
+  {
+    name: '大氚福',
+    content: [
+      { id: 1, name: 'Trace', variant: null, qty: 1, hidden: true },
+      { id: 2, name: 'IC', variant: null, qty: 2, hidden: true },
+      { id: 3, name: 'DOC', variant: null, qty: 2, hidden: true },
+      { id: 5, name: 'ALK', variant: null, qty: 1, hidden: true },
+      { id: 6, name: 'HO', variant: null, qty: 3, hidden: true },
+      { id: 7, name: 'DIC', variant: null, qty: 4, hidden: true },
+      { id: 8, name: 'HS-', variant: null, qty: 2, hidden: true },
+      { id: 9, name: 'I-', variant: null, qty: 2, hidden: true },
+      { id: 10, name: 'Ra', variant: null, qty: 1, hidden: true },
+      { id: 11, name: 'Sr Isotope', variant: null, qty: 1, hidden: true },
+      { id: 14, name: 'SO4', variant: '5L', qty: 1, hidden: false },
+      { id: 15, name: 'H-3', variant: null, qty: 1, hidden: true },
+      { id: 16, name: '真空瓶', variant: null, qty: 1, hidden: false },
+      { id: 17, name: '血清瓶', variant: '250mL', qty: 2, hidden: false },
+    ],
+  },
+  {
+    name: '大福',
+    content: [
+      { id: 1, name: 'Trace', variant: null, qty: 1, hidden: true },
+      { id: 2, name: 'IC', variant: null, qty: 2, hidden: true },
+      { id: 3, name: 'DOC', variant: null, qty: 2, hidden: true },
+      { id: 5, name: 'ALK', variant: null, qty: 1, hidden: true },
+      { id: 6, name: 'HO', variant: null, qty: 3, hidden: true },
+      { id: 7, name: 'DIC', variant: null, qty: 4, hidden: true },
+      { id: 8, name: 'HS-', variant: null, qty: 2, hidden: true },
+      { id: 9, name: 'I-', variant: null, qty: 2, hidden: true },
+      { id: 10, name: 'Ra', variant: null, qty: 1, hidden: true },
+      { id: 11, name: 'Sr Isotope', variant: null, qty: 1, hidden: true },
+      { id: 14, name: 'SO4', variant: '5L', qty: 1, hidden: false },
+      { id: 16, name: '真空瓶', variant: null, qty: 1, hidden: false },
+      { id: 17, name: '血清瓶', variant: '250mL', qty: 2, hidden: false },
+    ],
+  },
+  {
+    name: '小氚福',
+    content: [
+      { id: 1, name: 'Trace', variant: null, qty: 1, hidden: true },
+      { id: 2, name: 'IC', variant: null, qty: 1, hidden: true },
+      { id: 3, name: 'DOC', variant: null, qty: 2, hidden: true },
+      { id: 5, name: 'ALK', variant: null, qty: 1, hidden: true },
+      { id: 8, name: 'HS-', variant: null, qty: 2, hidden: true },
+      { id: 9, name: 'I-', variant: null, qty: 2, hidden: true },
+      { id: 10, name: 'Ra', variant: null, qty: 1, hidden: true },
+      { id: 15, name: 'H-3', variant: null, qty: 1, hidden: true },
+    ],
+  },
+  {
+    name: '小福',
+    content: [
+      { id: 1, name: 'Trace', variant: null, qty: 1, hidden: true },
+      { id: 2, name: 'IC', variant: null, qty: 1, hidden: true },
+      { id: 3, name: 'DOC', variant: null, qty: 2, hidden: true },
+      { id: 5, name: 'ALK', variant: null, qty: 1, hidden: true },
+      { id: 8, name: 'HS-', variant: null, qty: 2, hidden: true },
+      { id: 9, name: 'I-', variant: null, qty: 2, hidden: true },
+      { id: 10, name: 'Ra', variant: null, qty: 1, hidden: true },
+    ],
+  },
+  {
+    name: '空白',
+    content: [
+      { id: 1, name: 'Trace', variant: null, qty: 1, hidden: true },
+      { id: 2, name: 'IC', variant: null, qty: 1, hidden: true },
+      { id: 9, name: 'I-', variant: null, qty: 1, hidden: true },
+    ],
+  },
+]
 
 export function get_name(id: number) {
-  return sharedOptions.sample_type.find((s) => s.id === id)?.name!;
-};
+  return sharedOptions.sample_type.find((s) => s.id === id)?.name!
+}
 
 export function get_fullname(id: number) {
-  let _type = sharedOptions.sample_type.find(s => s.id === id);
-  let fullname = _type?.name;
+  let _type = sharedOptions.sample_type.find((s) => s.id === id)
+  let fullname = _type?.name
 
-  if (_type?.variant) fullname += ` ${_type?.variant}`;
+  if (_type?.variant) fullname += ` ${_type?.variant}`
 
   return fullname
 }
 
 export function get_id(name: string) {
-  return sharedOptions.sample_type.find((s) => s.name === name)?.id!;
-};
+  return sharedOptions.sample_type.find((s) => s.name === name)?.id!
+}
 
-let extract = (set: SampleSet[], name: string) => {
-  return set.find((item) => item.id === get_id(name));
-};
+export function get_simplified_set(current_set: SampleSet[] | null) {
+  if (current_set === null) return []
 
-let contains = (set: SampleSet[], name: string) => {
-  return extract(set, name) !== undefined;
-};
+  let simplified_set: (string | SampleSet)[] = []
 
-export function get_simplified_set(set: SampleSet[] | null) {
-  if (set === null) return [];
-
-  // Check if the set is a subset of setS
-  let set_s_label_list = Array.from(setS.map((s) => s.name));
-  let is_set_s = set_s_label_list.reduce(
-    (acc, cur) => acc && contains(set, cur),
-    true,
-  );
-
-  // Check if the set is a subset of setL
-  let so4_1l = extract(set, "SO4 1L");
-  let so4_2l = extract(set, "SO4 2L");
-  let so4_5l = extract(set, "SO4 5L");
-  let has_so4 =
-    so4_1l !== undefined || so4_2l !== undefined || so4_5l !== undefined;
-
-  let vaccum_vessel = extract(set, "真空瓶");
-  let has_vaccum = vaccum_vessel !== undefined;
-
-  let serum_bottle_250 = extract(set, "血清瓶");
-  let serum_bottle_160 = extract(set, "血清瓶 160mL");
-  let has_serum =
-    serum_bottle_250 != undefined || serum_bottle_160 !== undefined;
-
-  let is_set_l =
-    is_set_s &&
-    contains(set, "HO") &&
-    contains(set, "DIC") &&
-    has_so4 &&
-    has_vaccum &&
-    has_serum;
-
-  let simplified_set: (string | SampleSet)[] = [];
-  if (is_set_l) {
-    if (contains(set, "H-3")) {
-      simplified_set.push("大氚福");
-    } else {
-      simplified_set.push("大福");
+  for (let _preset of preset) {
+    let match_set = _preset.content
+      .map((s) => {
+        return { name: s.name, qty: s.qty }
+      })
+      .reduce(
+        (acc, test_set) =>
+          acc &&
+          current_set.find(
+            (set) =>
+              get_name(set.id) === test_set.name && set.qty >= test_set.qty
+          ) !== undefined,
+        true
+      )
+    if (match_set) {
+      simplified_set.push(_preset.name)
+      current_set
+        .filter((set) => {
+          if (
+            _preset.content.find(
+              (test_set) => get_name(set.id) === test_set.name
+            ) === undefined
+          ) {
+            return true
+          } else {
+            return (
+              _preset.content.find(
+                (test_set) =>
+                  get_name(set.id) === test_set.name &&
+                  (set.qty !== test_set.qty || !test_set.hidden)
+              ) !== undefined
+            )
+          }
+        })
+        .forEach((s) => {
+          simplified_set.push(s)
+        })
+      break
     }
-    if (so4_1l) simplified_set.push(so4_1l);
-    if (so4_2l) simplified_set.push(so4_2l);
-    if (so4_5l) simplified_set.push(so4_5l);
-    if (vaccum_vessel) simplified_set.push(vaccum_vessel);
-    if (serum_bottle_250) simplified_set.push(serum_bottle_250);
-    if (serum_bottle_160) simplified_set.push(serum_bottle_160);
-  } else if (is_set_s) {
-    if (contains(set, "H-3")) {
-      simplified_set.push("小氚福");
-    } else {
-      simplified_set.push("小福");
-    }
-    set.forEach((s) => {
-      let s_label = get_name(s.id);
-      if (s_label !== "H-3" && !set_s_label_list.includes(s_label)) {
-        simplified_set.push(s);
-      }
-    });
-  } else {
-    set.forEach((s) => {
-      simplified_set.push(s);
-    });
   }
 
-  return simplified_set;
-};
+  return simplified_set
+}

@@ -129,6 +129,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcfed56ad506cb2c684a14971b8861fdc3baaaae314b9e5f9bb532cbe3ba7a4f"
 
 [[package]]
+name = "aqua_troll_log_reader"
+version = "0.1.0"
+dependencies = [
+ "arrow",
+ "arrow-csv 54.2.1",
+ "arrow-schema 54.2.1",
+ "chrono",
+ "csv",
+ "encoding_rs",
+ "encoding_rs_io",
+ "quick-xml",
+ "scraper",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "zip",
+]
+
+[[package]]
 name = "arbitrary"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1439,9 +1458,9 @@ dependencies = [
 
 [[package]]
 name = "html5ever"
-version = "0.29.1"
+version = "0.29.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b7410cae13cbc75623c98ac4cbfd1f0bedddf3227afc24f370cf0f50a44a11c"
+checksum = "9b958f80f0fde8601dc6c08685adc743eecaa046181cebd5a57551468dfc2ddc"
 dependencies = [
  "log",
  "mac",
@@ -1713,22 +1732,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "insitu_log_reader"
+name = "insitu_logger"
 version = "0.1.0"
 dependencies = [
- "arrow",
- "arrow-csv 54.2.1",
- "arrow-schema 54.2.1",
+ "anyhow",
+ "aqua_troll_log_reader",
+ "axum 0.8.1",
+ "axum-server",
  "chrono",
- "csv",
- "encoding_rs",
- "encoding_rs_io",
- "quick-xml",
- "scraper",
+ "clap",
+ "config",
+ "mime_guess",
+ "open",
+ "rust-embed",
  "serde",
  "serde_json",
+ "sqlx",
  "thiserror",
- "zip",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -1940,9 +1964,9 @@ checksum = "c41e0c4fef86961ac6d6f8a82609f55f31b05e4fce149ac5710e439df7619ba4"
 
 [[package]]
 name = "markup5ever"
-version = "0.14.1"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7a7213d12e1864c0f002f52c2923d4556935a43dec5e71355c2760e0f6e7a18"
+checksum = "03a7b81dfb91586d0677086d40a6d755070e0799b71bb897485bac408dfd5c69"
 dependencies = [
  "log",
  "phf",
@@ -2423,30 +2447,6 @@ name = "pkg-config"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
-
-[[package]]
-name = "pocketstack"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum 0.8.1",
- "axum-server",
- "chrono",
- "clap",
- "config",
- "insitu_log_reader",
- "mime_guess",
- "open",
- "rust-embed",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror",
- "tokio",
- "tower-http",
- "tracing",
- "tracing-subscriber",
-]
 
 [[package]]
 name = "powerfmt"
