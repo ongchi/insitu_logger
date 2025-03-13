@@ -7,25 +7,45 @@ use axum::extract::DefaultBodyLimit;
 use axum::http::{header, HeaderValue, Method};
 use axum::routing::{delete, get, post, put, Router};
 use axum::Extension;
+use clap::Parser;
 use sqlx::sqlite::SqlitePool;
 use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::api::ApiContext;
+use crate::api::{error::Error, ApiContext};
 use crate::frontend::{index_handler, static_handler};
 
+#[derive(Parser)]
+struct Args {
+    /// Bind address
+    #[clap(short, long, default_value = "0.0.0.0")]
+    bind_address: String,
+
+    /// Bind port number
+    #[clap(short, long, default_value = "4000")]
+    port: u16,
+
+    /// Path to sqlite database
+    #[clap(short, long, default_value = "water_sampling.db")]
+    database: String,
+
+    /// Skip open browser on start
+    #[clap(long, default_value = "false")]
+    no_open: bool,
+}
+
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Error> {
     // Setup tracing
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::from_default_env())
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    let cli_args = Args::parse();
+
     // Setup database
-    let pool = SqlitePool::connect("sqlite://water_sampling.db")
-        .await
-        .unwrap();
+    let pool = SqlitePool::connect(&format!("sqlite://{}", cli_args.database)).await?;
 
     // Server routes
     let app = Router::new()
@@ -103,10 +123,21 @@ async fn main() {
                 .allow_headers([header::CONTENT_TYPE]),
         );
     // Start server
-    let addr = SocketAddr::from(([0, 0, 0, 0], 4000));
+    let addr: SocketAddr = format!("{}:{}", cli_args.bind_address, cli_args.port)
+        .parse()
+        .map_err(|e| anyhow::anyhow!("{:?}", e))?;
     tracing::info!("Listening on {:?}", addr);
+
+    #[cfg(not(debug_assertions))]
+    if !cli_args.no_open {
+        open::that(format!("http://localhost:{}", cli_args.port))
+            .map_err(|e| anyhow::anyhow!("{:?}", e))?;
+    }
+
     axum_server::bind(addr)
         .serve(app.into_make_service())
         .await
-        .unwrap();
+        .map_err(|e| anyhow::anyhow!("{:?}", e))?;
+
+    Ok(())
 }
