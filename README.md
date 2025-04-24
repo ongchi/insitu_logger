@@ -13,6 +13,12 @@ the project is based on the [pocketstack](https://github.com/knarkzel/pocketstac
 
 # Build Instructions
 
+## Requirements
+
+- [Node.js](https://nodejs.org/) & [pnpm](https://pnpm.io/)
+- [Rust](https://www.rust-lang.org/tools/install)
+- [SQLx CLI](https://github.com/launchbadge/sqlx/tree/main/sqlx-cli)
+
 ## Clone the Repository
 
 ```shell
@@ -35,9 +41,17 @@ cd ../../
 pnpm run build
 ```
 
-## Build and Run the Backend
+## Create Database
 
 ```shell
 cd ../
+sqlx database create
+sqlx migrate run
+cat fixtures/sample.sql | sqlite3 water_sampling.db
+```
+
+## Build and Run the Backend
+
+```shell
 cargo run --release
 ```
