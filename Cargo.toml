@@ -9,7 +9,7 @@ strip = true
 
 [dependencies]
 anyhow = "1.0"
-aqua_troll_log_reader = { path = "../aqua_troll_log_reader" }
+aqua_troll_log_reader = { git = "https://github.com/ongchi/aqua_troll_log_reader.git" }
 axum = { version = "0.8", features = ["multipart"] }
 axum-server = "0.7"
 chrono = { version = "0.4", features = ["serde"] }
@@ -17,7 +17,7 @@ clap = { version = "4.5", features = ["derive"] }
 config = "0.15"
 mime_guess = "2"
 open = "5"
-tokio = { version = "1.42", features = ["full"] }
+tokio = { version = "1.44", features = ["full"] }
 tower-http = { version = "0.6", features = ["cors"] }
 rust-embed = { version = "8.5", features = ["axum-ex"] }
 serde = { version = "1.0", features = ["derive"] }
