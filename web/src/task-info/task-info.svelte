@@ -129,7 +129,6 @@
             if (field === "sampling_time" || field === "purging_time") {
               return value ? new Date(value) : null;
             } else if (
-              field in
               [
                 "id",
                 "task_id",
@@ -139,7 +138,7 @@
                 "pump_freq",
                 "pump_rate",
                 "sample_wt_radium",
-              ]
+              ].some((e) => e === field)
             ) {
               return value ? parseFloat(value) : null;
             } else {
