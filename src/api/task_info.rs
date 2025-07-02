@@ -351,7 +351,13 @@ pub async fn update_task_info(
                 .await?;
             }
             "pump_id" => {
-                let val = val.as_str();
+                // val should be an Number for this field.
+                // The as_str always returns None here, convert to str manually.
+                let val = if val.is_null() {
+                    None
+                } else {
+                    Some(format!("{}", val))
+                };
                 sqlx::query!(
                     "UPDATE task_info SET pump_id = $1 WHERE id = $2",
                     val,
