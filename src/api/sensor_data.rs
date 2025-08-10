@@ -1,18 +1,20 @@
 use std::io::Cursor;
 
+use aqua_troll_log_reader::{AquaTrollLogError, AquaTrollLogReader};
 use axum::extract::{Extension, Multipart, Path};
 use axum::Json;
 use chrono::NaiveDateTime;
-use aqua_troll_log_reader::{AquaTrollLogError, AquaTrollLogReader};
 use serde::{Deserialize, Serialize};
 
 use super::{ApiContext, Error};
 
-pub async fn insitu_log_handler(mut multipart: Multipart) -> Result<Json<AquaTrollLogReader>, Error> {
+pub async fn insitu_log_handler(
+    mut multipart: Multipart,
+) -> Result<Json<AquaTrollLogReader>, Error> {
     let log = if let Some(field) = multipart.next_field().await.unwrap() {
         let file_name = field.file_name().unwrap_or("").to_string();
         let data = field.bytes().await.unwrap();
-        let ext = file_name.split('.').last().unwrap_or("");
+        let ext = file_name.split('.').next_back().unwrap_or("");
 
         let mut reader = Cursor::new(data);
 
