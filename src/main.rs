@@ -10,7 +10,7 @@ use axum::Extension;
 use clap::Parser;
 use sqlx::sqlite::SqlitePool;
 use tower_http::cors::CorsLayer;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{filter::LevelFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::api::{error::Error, ApiContext};
 use crate::frontend::{index_handler, static_handler};
@@ -38,7 +38,11 @@ struct Args {
 async fn main() -> Result<(), Error> {
     // Setup tracing
     tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::from_default_env())
+        .with(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(LevelFilter::DEBUG.into())
+                .from_env_lossy(),
+        )
         .with(tracing_subscriber::fmt::layer())
         .init();
 
