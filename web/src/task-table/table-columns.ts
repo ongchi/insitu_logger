@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/table-core'
 import { renderComponent } from '$lib/components/ui/data-table/index.js'
 import { Checkbox } from '$lib/components/ui/checkbox/index.js'
-import { formatDate } from '$lib/utils.js'
+import { formatDate } from '$lib/date-utils.ts'
 import { sharedOptions } from '$lib/shared-variables.svelte.ts'
 import EditableCell from './editable-cell.svelte'
 import SampleSetEditor from './sample-set-cell/sample-set-editor.svelte'

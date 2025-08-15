@@ -11,7 +11,7 @@
   import { RangeCalendar } from "$lib/components/ui/range-calendar/index.js";
   import * as Popover from "$lib/components/ui/popover/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
-  import { findMonday } from "$lib/utils.js";
+  import { findMonday } from "$lib/date-utils.ts";
   import { CalendarDate } from "@internationalized/date";
   import { onMount } from "svelte";
   import { ApiClient } from "$lib/api-client";

@@ -19,7 +19,7 @@
   } from "./test_function.ts";
   import { insitu_log_handler } from "./sensor-log-handler.ts";
   import { type InSituLog } from "$lib/types.ts";
-  import { dateToISOString } from "$lib/utils.ts";
+  import { dateToISOString } from "$lib/date-utils.ts";
   import { ApiClient } from "$lib/api-client";
 
   // Local datetime hack for BokehJS
