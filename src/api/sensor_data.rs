@@ -18,11 +18,19 @@ pub async fn insitu_log_handler(
 
         let mut reader = Cursor::new(data);
 
-        match ext {
-            "csv" => AquaTrollLogReader::from_csv(&mut reader)?,
-            "txt" => AquaTrollLogReader::from_txt(&mut reader)?,
-            "zip" => AquaTrollLogReader::from_zipped_html(&mut reader)?,
+        match match ext {
+            "csv" => AquaTrollLogReader::from_csv(&mut reader),
+            "txt" => AquaTrollLogReader::from_txt(&mut reader),
+            "zip" => AquaTrollLogReader::from_zipped_html(&mut reader),
             _ => return Err(AquaTrollLogError::InvalidData)?,
+        } {
+            Ok(log) => log,
+            Err(AquaTrollLogError::WithPartialResult(partial)) => {
+                return Err(Error::WithPartialResult(partial))?;
+            }
+            _ => {
+                return Err(AquaTrollLogError::InvalidData)?;
+            }
         }
     } else {
         return Err(AquaTrollLogError::InvalidData)?;
@@ -108,12 +116,14 @@ pub async fn insert_sensor_data(
 ) -> Result<(), Error> {
     let mut tx = ctx.db.begin().await?;
 
+    tracing::info!("Inserting sensor data for task ID: {}", task_id);
+
     for sensor_record in sensor_data {
         if sensor_record.task_id != task_id {
             return Err(anyhow::anyhow!("Invalid Data: Task ID mismatch").into());
         }
 
-        tracing::info!("Inserting sensor data: {:?}", sensor_record);
+        tracing::debug!("Inserting sensor data: {:?}", sensor_record);
 
         sqlx::query!(
             r#"

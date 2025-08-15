@@ -49,7 +49,7 @@
                 clearDialogIsOpen = false;
                 dropdownIsOpen = false;
                 onClearLogData();
-              }}>CLear</Button
+              }}>Clear</Button
             >
           </Dialog.Footer>
         </Dialog.Content>

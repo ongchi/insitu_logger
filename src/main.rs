@@ -10,7 +10,7 @@ use axum::Extension;
 use clap::Parser;
 use sqlx::sqlite::SqlitePool;
 use tower_http::cors::CorsLayer;
-use tracing_subscriber::{filter::LevelFilter, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::api::{error::Error, ApiContext};
 use crate::frontend::{index_handler, static_handler};
@@ -32,21 +32,25 @@ struct Args {
     /// Skip open browser on start
     #[clap(long, default_value = "false")]
     no_open: bool,
+
+    #[clap(short, long, default_value = "info")]
+    log_level: String,
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    let cli_args = Args::parse();
+
     // Setup tracing
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::EnvFilter::builder()
-                .with_default_directive(LevelFilter::DEBUG.into())
-                .from_env_lossy(),
+            tracing_subscriber::EnvFilter::builder().parse_lossy(format!(
+                "insitu_logger={},aqua_troll_log_reader={}",
+                cli_args.log_level, cli_args.log_level
+            )),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
-
-    let cli_args = Args::parse();
 
     // Setup database
     let pool = SqlitePool::connect(&format!("sqlite://{}", cli_args.database)).await?;

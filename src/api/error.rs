@@ -1,5 +1,6 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use axum::Json;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -11,6 +12,8 @@ pub enum Error {
     Anyhow(#[from] anyhow::Error),
     #[error("failed to parse log data")]
     AquaTrollLog(#[from] aqua_troll_log_reader::AquaTrollLogError),
+    #[error("partial result")]
+    WithPartialResult(#[from] aqua_troll_log_reader::ErrorWithPartialResult),
 }
 
 impl IntoResponse for Error {
@@ -29,8 +32,12 @@ impl IntoResponse for Error {
                 (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
             }
             Error::AquaTrollLog(e) => {
-                tracing::error!("failed to parse log data: {:?}", e);
+                tracing::error!("Failed to parse log data: {:?}", e);
                 (StatusCode::BAD_REQUEST, e.to_string()).into_response()
+            }
+            Error::WithPartialResult(partial) => {
+                tracing::warn!("Partial result: {:?}", partial.errors);
+                (StatusCode::PARTIAL_CONTENT, Json(partial.result)).into_response()
             }
         }
     }
