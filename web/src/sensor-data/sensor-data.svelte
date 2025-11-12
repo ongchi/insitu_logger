@@ -4,14 +4,7 @@
   import LogEditMenu from "./log-edit-menu.svelte";
   import { selectedTaskInfo } from "$lib/shared-variables.svelte";
   import { toast } from "svelte-sonner";
-  import { ColumnDataSource } from "@bokeh/bokehjs";
-  import {
-    Figure,
-    figure,
-    show,
-    gridplot,
-  } from "@bokeh/bokehjs/build/js/lib/api/plotting";
-  import { BoxAnnotation, HoverTool } from "@bokeh/bokehjs/build/js/lib/models";
+  import Plotly from "plotly.js-dist-min";
   import {
     criteria,
     create_annotation_bounds,
@@ -21,9 +14,6 @@
   import { type InSituLog } from "$lib/types.ts";
   import { dateToISOString } from "$lib/date-utils.ts";
   import { ApiClient } from "$lib/api-client";
-
-  // Local datetime hack for BokehJS
-  let LOCAL_TIME_OFFSET = new Date().getTimezoneOffset() * 60 * 1000;
 
   let SQL_TO_FULL_COLUMN_NAME: { [id: string]: string } = {
     datetime: "Date and Time",
@@ -49,29 +39,13 @@
     depth: "Depth (m)",
   };
   let columns = Object.keys(SQL_TO_FULL_COLUMN_NAME);
-  let source = $state(new ColumnDataSource({ data: {} }));
+  let plotData: { [key: string]: any[] } = $state({});
 
-  let plots: Figure[] = $state([]);
-  let purgingTime = $derived(
-    (() => {
-      let purgingTimeStr = selectedTaskInfo[0]?.purging_time;
-      // Local datetime hack for BokehJS
-      return purgingTimeStr
-        ? purgingTimeStr.getTime() - LOCAL_TIME_OFFSET
-        : null;
-    })(),
-  );
-  let samplingTime = $derived(
-    (() => {
-      let samplingTimeStr = selectedTaskInfo[0]?.sampling_time;
-      // Local datetime hack for BokehJS
-      return samplingTimeStr
-        ? samplingTimeStr.getTime() - LOCAL_TIME_OFFSET
-        : null;
-    })(),
-  );
+  let purgingTime = $derived(selectedTaskInfo[0]?.purging_time);
+  let samplingTime = $derived(selectedTaskInfo[0]?.sampling_time);
 
   let logFileInput: any = $state();
+  let isUpdatingZoom = false;
 
   $effect(() => {
     if (selectedTaskInfo.length > 0) {
@@ -79,121 +53,218 @@
       let currentTaskId = selectedTaskInfo[0]?.task_id;
       ApiClient.get(`/api/task/${currentTaskId}/sensor`, (data) => {
         if (data.length > 0) {
-          source = createColumnDataSource(data);
-          createGridPlot(source);
+          plotData = createPlotData(data);
+          createGridPlot(plotData);
         }
       });
     }
   });
 
   function clearPlot() {
-    let plotDiv = document.getElementById("bokehjs-plot");
+    let plotDiv = document.getElementById("plotly-plot");
     if (plotDiv) plotDiv.innerHTML = "";
   }
 
-  function createColumnDataSource(data: any) {
+  function createPlotData(data: any) {
     let transformedData: any = {};
     columns.forEach((key) => {
       if (key === "datetime") {
-        let datetime: number[] = data.map((d: any) =>
-          Date.parse(d["datetime"]),
-        );
-        let timestamp = datetime.map((d) => new Date(d).toString());
-        // Local datetime hack for BokehJS
-        transformedData["datetime"] = datetime.map(
-          (d: number) => d - LOCAL_TIME_OFFSET,
-        );
-        transformedData["timestamp"] = timestamp;
+        transformedData["datetime"] = data.map((d: any) => new Date(d["datetime"]));
       } else {
         transformedData[key] = data.map((d: any) => d[key]);
       }
     });
-    return new ColumnDataSource({
-      data: transformedData,
-    });
+    return transformedData;
   }
 
-  function createGridPlot(data_source: ColumnDataSource) {
-    plots = columns
-      .filter((k) => k !== "datetime")
-      .map((key) => {
-        const hover = new HoverTool({
-          tooltips: [
-            ["time", "@timestamp"],
-            [key, `@{${key}}{0.0000}`],
-          ],
-          mode: "vline",
-        });
+  function createGridPlot(data: { [key: string]: any[] }) {
+    let plotDiv = document.getElementById("plotly-plot");
+    if (!plotDiv) return;
 
-        const plot = figure({
-          title: criteria[key]
-            ? `${SQL_TO_FULL_COLUMN_NAME[key]} (±${criteria[key]})`
-            : SQL_TO_FULL_COLUMN_NAME[key],
-          sizing_mode: "stretch_width",
-          height: 300,
-          x_axis_type: "datetime",
-        });
-        plot.add_tools(hover);
+    // Create a container for all plots
+    plotDiv.innerHTML = "";
+    const gridContainer = document.createElement("div");
+    gridContainer.style.display = "grid";
+    gridContainer.style.gridTemplateColumns = "repeat(4, 1fr)";
+    gridContainer.style.gap = "10px";
+    gridContainer.style.width = "100%";
+    plotDiv.appendChild(gridContainer);
 
-        hover.renderers = [
-          plot.line(
-            { field: "datetime" },
-            { field: key },
-            { source: data_source, line_width: 2 },
-          ),
-        ];
+    const plotKeys = columns.filter((k) => k !== "datetime");
+    const plotDivs: HTMLElement[] = [];
 
-        return plot;
-      });
-
-    // Link x_range of all plots
-    plots.forEach((p) => {
-      p.x_range = plots[0].x_range;
+    // Create plot containers
+    plotKeys.forEach((key, idx) => {
+      const div = document.createElement("div");
+      div.id = `plot-${idx}`;
+      div.style.height = "300px";
+      gridContainer.appendChild(div);
+      plotDivs.push(div);
     });
 
-    let grid = gridplot(plots, { sizing_mode: "stretch_width", ncols: 4 });
-    show(grid, "#bokehjs-plot");
-
+    // Get quality control annotations
+    let annotationBounds: { [key: string]: [number, number][] } = {};
     if (purgingTime) {
-      plots.forEach((p) => {
-        p.vspan(purgingTime, { line_width: 1, line_color: "green" });
-        p.vspan(purgingTime + 1 * 3600 * 1000, {
-          line_width: 1,
-          line_color: "gray",
+      let numericData: { [key: string]: any[] } = { ...data };
+      numericData["datetime"] = data["datetime"].map((d: Date) => d.getTime());
+      let testResult = test_sampling_dataframe(numericData, 5 * 60 * 1000);
+      annotationBounds = create_annotation_bounds(
+        testResult,
+        purgingTime.getTime(),
+      );
+    }
+
+    // Create each plot
+    plotKeys.forEach((key, idx) => {
+      const shapes: any[] = [];
+
+      // Add time markers
+      if (purgingTime) {
+        // Green line - purging start
+        shapes.push({
+          type: "line",
+          x0: purgingTime,
+          x1: purgingTime,
+          y0: 0,
+          y1: 1,
+          yref: "paper",
+          line: { color: "green", width: 1 },
         });
-      });
-    }
 
-    if (samplingTime) {
-      plots.forEach((p) =>
-        p.vspan(samplingTime, { line_width: 1, line_color: "red" }),
-      );
-    }
+        // Gray line - stabilization (1 hour after purging)
+        const stabilizationTime = new Date(
+          purgingTime.getTime() + 1 * 3600 * 1000,
+        );
+        shapes.push({
+          type: "line",
+          x0: stabilizationTime,
+          x1: stabilizationTime,
+          y0: 0,
+          y1: 1,
+          yref: "paper",
+          line: { color: "gray", width: 1 },
+        });
+      }
 
-    if (purgingTime) {
-      let test_result = test_sampling_dataframe(
-        data_source.data as any,
-        5 * 60 * 1000,
-      );
-      let annotation_bounds = create_annotation_bounds(
-        test_result,
-        purgingTime,
-      );
-      columns.forEach((key, idx) => {
-        if (key in annotation_bounds && annotation_bounds[key].length > 0) {
-          annotation_bounds[key].forEach((bounds) => {
-            plots[idx - 1].add_layout(
-              new BoxAnnotation({
-                left: bounds[0],
-                right: bounds[1],
-                fill_color: "#D55E00",
-                propagate_hover: true,
-              }),
-            );
+      if (samplingTime) {
+        // Red line - sampling time
+        shapes.push({
+          type: "line",
+          x0: samplingTime,
+          x1: samplingTime,
+          y0: 0,
+          y1: 1,
+          yref: "paper",
+          line: { color: "red", width: 1 },
+        });
+      }
+
+      // Add quality control box annotations
+      if (key in annotationBounds && annotationBounds[key].length > 0) {
+        annotationBounds[key].forEach((bounds) => {
+          shapes.push({
+            type: "rect",
+            x0: new Date(bounds[0]),
+            x1: new Date(bounds[1]),
+            y0: 0,
+            y1: 1,
+            yref: "paper",
+            fillcolor: "#D55E00",
+            opacity: 0.3,
+            line: { width: 0 },
+          });
+        });
+      }
+
+      const trace = {
+        x: data["datetime"],
+        y: data[key],
+        type: "scatter",
+        mode: "lines",
+        line: { width: 2 },
+        hovertemplate: "%{x}<br>" + key + ": %{y:.4f}<extra></extra>",
+      };
+
+      const layout = {
+        title: {
+          text: criteria[key]
+            ? `${SQL_TO_FULL_COLUMN_NAME[key]} (±${criteria[key]})`
+            : SQL_TO_FULL_COLUMN_NAME[key],
+          font: { size: 12 },
+        },
+        xaxis: {
+          type: "date",
+          showgrid: true,
+        },
+        yaxis: {
+          showgrid: true,
+        },
+        margin: { l: 60, r: 20, t: 40, b: 40 },
+        hovermode: "x",
+        shapes: shapes,
+        showlegend: false,
+      };
+
+      const config = {
+        responsive: true,
+        displayModeBar: true,
+        modeBarButtonsToRemove: ["lasso2d", "select2d"],
+      };
+
+      Plotly.newPlot(plotDivs[idx], [trace], layout, config);
+
+      // Sync zoom/pan across all plots
+      plotDivs[idx].on("plotly_relayout", (eventData: any) => {
+        if (isUpdatingZoom) return;
+        isUpdatingZoom = true;
+
+        // Check if this is a zoom/pan event
+        if (eventData["xaxis.range[0]"] !== undefined) {
+          const xRange = [eventData["xaxis.range[0]"], eventData["xaxis.range[1]"]];
+
+          // Update all other plots
+          plotDivs.forEach((div, otherIdx) => {
+            if (otherIdx !== idx) {
+              Plotly.relayout(div, {
+                "xaxis.range[0]": xRange[0],
+                "xaxis.range[1]": xRange[1],
+              });
+            }
+          });
+        } else if (eventData["xaxis.autorange"] === true) {
+          // Handle reset/autoscale
+          plotDivs.forEach((div, otherIdx) => {
+            if (otherIdx !== idx) {
+              Plotly.relayout(div, { "xaxis.autorange": true });
+            }
           });
         }
+
+        setTimeout(() => {
+          isUpdatingZoom = false;
+        }, 100);
       });
-    }
+
+      // Sync hover across all plots
+      plotDivs[idx].on("plotly_hover", (eventData: any) => {
+        const point = eventData.points[0];
+        const xValue = point.x;
+
+        plotDivs.forEach((div, otherIdx) => {
+          if (otherIdx !== idx) {
+            Plotly.Fx.hover(div, { xval: xValue });
+          }
+        });
+      });
+
+      plotDivs[idx].on("plotly_unhover", () => {
+        plotDivs.forEach((div, otherIdx) => {
+          if (otherIdx !== idx) {
+            Plotly.Fx.unhover(div);
+          }
+        });
+      });
+    });
   }
 
   function onLogFileChanged(ev: Event) {
@@ -207,21 +278,20 @@
         if (dataTable) {
           uploadData(dataTable);
 
-          let data: { [key: string]: (number | string | Date)[] } = {
-            ...dataTable,
-          };
-          data["timestamp"] = data["datetime"].map((d) =>
-            new Date(d).toString(),
-          );
-          // BokehJS axis ticks hack
-          data["datetime"] = data["datetime"].map(
-            (d) => (d as number) - LOCAL_TIME_OFFSET,
-          );
-          source = new ColumnDataSource({
-            data: data,
+          let plotDataFromFile: { [key: string]: any[] } = {};
+          Object.keys(dataTable).forEach((key) => {
+            if (key === "datetime") {
+              plotDataFromFile[key] = dataTable[key].map(
+                (d) => new Date(d as number),
+              );
+            } else {
+              plotDataFromFile[key] = dataTable[key];
+            }
           });
+
+          plotData = plotDataFromFile;
           clearPlot();
-          createGridPlot(source);
+          createGridPlot(plotData);
         }
       }).finally(() => {
         (ev.target as HTMLInputElement).value = "";
@@ -287,6 +357,6 @@
     </div>
   </div>
   <div class="w-full px-2">
-    <div id="bokehjs-plot"></div>
+    <div id="plotly-plot"></div>
   </div>
 {/if}

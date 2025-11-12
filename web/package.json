@@ -33,7 +33,6 @@
     "vite": "^7.1.2"
   },
   "dependencies": {
-    "@bokeh/bokehjs": "file:bokeh/bokehjs/bokeh-bokehjs-3.7.0-dev.5.tgz",
     "@svelte-plugins/datepicker": "^1.0.11",
     "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/forms": "^0.5.10",
@@ -44,7 +43,8 @@
     "@tiptap/pm": "^3.2.0",
     "@tiptap/starter-kit": "^3.2.0",
     "axios": "^1.11.0",
-    "jspdf": "^3.0.1"
+    "jspdf": "^3.0.1",
+    "plotly.js-dist-min": "^3.2.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
