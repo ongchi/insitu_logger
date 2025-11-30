@@ -74,8 +74,8 @@
   let logFileInput: any = $state();
 
   $effect(() => {
+    clearPlot();
     if (selectedTaskInfo.length > 0) {
-      clearPlot();
       let currentTaskId = selectedTaskInfo[0]?.task_id;
       ApiClient.get(`/api/task/${currentTaskId}/sensor`, (data) => {
         if (data.length > 0) {
@@ -114,6 +114,8 @@
   }
 
   function createGridPlot(data_source: ColumnDataSource) {
+    clearPlot();
+
     plots = columns
       .filter((k) => k !== "datetime")
       .map((key) => {
@@ -220,7 +222,6 @@
           source = new ColumnDataSource({
             data: data,
           });
-          clearPlot();
           createGridPlot(source);
         }
       }).finally(() => {
@@ -261,32 +262,38 @@
 </script>
 
 {#if selectedTaskInfo.length > 0}
-  <div class="flex w-full px-2">
-    <div class="flex flex-column px-2 items-center gap-1.5">
-      <Label class="min-w-[4em]" for="log_file">Log File</Label>
-      <Input
-        bind:this={logFileInput}
-        id="log_file"
-        type="file"
-        accept=".csv,.txt"
-        placeholder="Upload log file"
-        onchange={onLogFileChanged}
-      />
-      <LogEditMenu
-        disabled={selectedTaskInfo.length == 0}
-        onClearLogData={() => {
-          ApiClient.delete(
-            `/api/task/${selectedTaskInfo[0]?.task_id}/sensor`,
-            (_) => {
-              toast.success("Data cleared");
-              clearPlot();
-            },
-          );
-        }}
-      />
+  <div class="w-full bg-white dark:bg-zinc-800">
+    <!-- Header -->
+    <div class="flex items-center bg-white px-6 py-3 dark:bg-zinc-800">
+      <div class="flex items-center gap-2">
+        <Label class="sr-only" for="log_file">Log File</Label>
+        <Input
+          bind:this={logFileInput}
+          id="log_file"
+          type="file"
+          accept=".csv,.txt"
+          class="w-64"
+          placeholder="Upload log file"
+          onchange={onLogFileChanged}
+        />
+        <LogEditMenu
+          disabled={selectedTaskInfo.length == 0}
+          onClearLogData={() => {
+            ApiClient.delete(
+              `/api/task/${selectedTaskInfo[0]?.task_id}/sensor`,
+              (_) => {
+                toast.success("Data cleared");
+                clearPlot();
+              },
+            );
+          }}
+        />
+      </div>
     </div>
-  </div>
-  <div class="w-full px-2">
-    <div id="bokehjs-plot"></div>
+
+    <!-- Content -->
+    <div class="px-6 pb-6">
+      <div id="bokehjs-plot"></div>
+    </div>
   </div>
 {/if}

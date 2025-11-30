@@ -20,6 +20,13 @@
   let isEditing = $state(false);
   let isSaving = $state(false);
 
+  // Update currentSet when initialSet changes (e.g., when a different task is selected)
+  $effect(() => {
+    currentSet = JSON.parse(JSON.stringify(initialSet));
+    isEditing = false;
+    isSaving = false;
+  });
+
   async function handleSave() {
     let newSet = $state
       .snapshot(currentSet)
@@ -51,6 +58,9 @@
 </script>
 
 <div class="flex flex-wrap flex-row space-x-1">
+  {#if currentSet.length == 0}
+    <div class="flex flex-nowrap flex-row items-center m-1">No Samples</div>
+  {/if}
   {#each isEditing ? currentSet : get_simplified_set(currentSet) as sample}
     <div class="flex flex-nowrap flex-row m-1">
       {#if typeof sample === "string"}
