@@ -7,7 +7,7 @@
 
   import { selectedTask, sharedOptions } from "$lib/shared-variables.svelte";
 
-  let updateTimeOut: number;
+  let updateTimeOut: ReturnType<typeof setTimeout>;
   function _updateTask(field: string, value: any) {
     value = value != null ? value : null;
 

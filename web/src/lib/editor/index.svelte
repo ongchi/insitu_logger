@@ -23,7 +23,7 @@
   }: { value: string | undefined; disabled: boolean; onUpdate: Function } =
     $props();
 
-  let updateTimeOut: number;
+  let updateTimeOut: ReturnType<typeof setTimeout>;
   onMount(() => {
     editor = new Editor({
       element,

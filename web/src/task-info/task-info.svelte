@@ -124,7 +124,7 @@
     );
   }
 
-  let updateTimeOut: number;
+  let updateTimeOut: ReturnType<typeof setTimeout>;
   function _updateTaskInfo(field: string, value: any) {
     if (field === "sampling_time" || field === "purging_time") {
       value = localDateStringToISOString(value);
