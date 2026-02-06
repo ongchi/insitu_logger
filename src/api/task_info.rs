@@ -28,7 +28,7 @@ pub async fn get_last_timestamp(
     .await?;
 
     Ok(Json(
-        last_timestamp.map(|row| row.sampling_time).unwrap_or(None),
+        last_timestamp.and_then(|row| row.sampling_time),
     ))
 }
 

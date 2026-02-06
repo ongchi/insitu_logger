@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use aqua_troll_log_reader::{AquaTrollLogError, AquaTrollLogReader};
+use aqua_troll_log_reader::{AquaTrollLogData, AquaTrollLogError, AquaTrollLogReader};
 use axum::extract::{Extension, Multipart, Path};
 use axum::Json;
 use chrono::NaiveDateTime;
@@ -10,30 +10,36 @@ use super::{ApiContext, Error};
 
 pub async fn insitu_log_handler(
     mut multipart: Multipart,
-) -> Result<Json<AquaTrollLogReader>, Error> {
-    let log = if let Some(field) = multipart.next_field().await.unwrap() {
-        let file_name = field.file_name().unwrap_or("").to_string();
-        let data = field.bytes().await.unwrap();
-        let ext = file_name.split('.').next_back().unwrap_or("");
+) -> Result<Json<AquaTrollLogData>, Error> {
+    let field = multipart
+        .next_field()
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to read multipart field: {e}"))?
+        .ok_or(AquaTrollLogError::InvalidData)?;
 
-        let mut reader = Cursor::new(data);
+    let file_name = field.file_name().unwrap_or("").to_string();
+    let data = field
+        .bytes()
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to read field bytes: {e}"))?;
+    let ext = file_name.split('.').next_back().unwrap_or("");
 
-        match match ext {
-            "csv" => AquaTrollLogReader::from_csv(&mut reader),
-            "txt" => AquaTrollLogReader::from_txt(&mut reader),
-            "zip" => AquaTrollLogReader::from_zipped_html(&mut reader),
-            _ => return Err(AquaTrollLogError::InvalidData)?,
-        } {
-            Ok(log) => log,
-            Err(AquaTrollLogError::WithPartialResult(partial)) => {
-                return Err(Error::WithPartialResult(partial))?;
-            }
-            _ => {
-                return Err(AquaTrollLogError::InvalidData)?;
-            }
+    let mut reader = Cursor::new(data);
+    let log_reader = AquaTrollLogReader::default();
+
+    let parse_result = match ext {
+        "csv" => log_reader.read_csv(&mut reader),
+        "txt" => log_reader.read_txt(&mut reader),
+        "zip" => log_reader.read_zipped_html(&mut reader),
+        _ => return Err(AquaTrollLogError::InvalidData.into()),
+    };
+
+    let log = match parse_result {
+        Ok(log) => log,
+        Err(AquaTrollLogError::WithPartialResult(partial)) => {
+            return Err(Error::WithPartialResult(partial));
         }
-    } else {
-        return Err(AquaTrollLogError::InvalidData)?;
+        Err(_) => return Err(AquaTrollLogError::InvalidData.into()),
     };
 
     Ok(Json(log))
@@ -168,7 +174,7 @@ pub async fn insert_sensor_data(
 
 pub async fn clear_sensor_data(
     ctx: Extension<ApiContext>,
-    Path(task_id): Path<u32>,
+    Path(task_id): Path<i64>,
 ) -> Result<(), Error> {
     sqlx::query!("DELETE FROM sensor_data WHERE task_id = $1", task_id)
         .execute(&ctx.db)

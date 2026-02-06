@@ -2,7 +2,7 @@
   import { Input } from "$lib/components/ui/input/index.js";
   import { type SampleSet } from "$lib/types.ts";
   import { get_simplified_set, get_fullname } from "./sample-set-utils.ts";
-  import { Check, X, Pencil } from "lucide-svelte";
+  import { Check, X, Pencil } from "@lucide/svelte";
   import * as Popover from "$lib/components/ui/popover/index.js";
   import EditMenu from "./sample-set-edit-menu.svelte";
   import { buttonVariants } from "$lib/components/ui/button/index.js";

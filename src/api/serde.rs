@@ -2,7 +2,7 @@ pub mod iso8601 {
     use chrono::{DateTime, Local, NaiveDateTime, TimeZone};
     use serde::{self, Deserialize, Deserializer, Serializer};
 
-    const FORMAT: &str = "%Y-%m-%dT%H:%M:%S%.3f%z";
+    pub const FORMAT: &str = "%Y-%m-%dT%H:%M:%S%.3f%z";
 
     pub fn serialize<S>(date: &NaiveDateTime, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -31,8 +31,6 @@ pub mod iso8601_option {
     use chrono::{DateTime, NaiveDateTime};
     use serde::{self, Deserialize, Deserializer, Serializer};
 
-    const FORMAT: &str = "%Y-%m-%dT%H:%M:%S%.3f%z";
-
     pub fn serialize<S>(date: &Option<NaiveDateTime>, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -48,14 +46,13 @@ pub mod iso8601_option {
         D: Deserializer<'de>,
     {
         let s = Option::<String>::deserialize(deserializer)?;
-        if let Some(s) = s {
-            Ok(Some(
-                DateTime::parse_from_str(&s, FORMAT)
+        match s {
+            Some(s) => Ok(Some(
+                DateTime::parse_from_str(&s, super::iso8601::FORMAT)
                     .map_err(serde::de::Error::custom)?
                     .naive_local(),
-            ))
-        } else {
-            Ok(None)
+            )),
+            None => Ok(None),
         }
     }
 }

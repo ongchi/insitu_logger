@@ -1,6 +1,6 @@
 <script lang="ts">
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
-  import { Plus, Eraser } from "lucide-svelte";
+  import { Plus, Eraser } from "@lucide/svelte";
   import { sharedOptions } from "$lib/shared-variables.svelte.ts";
   import { type SampleSet } from "$lib/types.ts";
   import { get_id, preset } from "./sample-set-utils.ts";

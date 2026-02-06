@@ -10,7 +10,7 @@
   import Editor from "$lib/editor/index.svelte";
   import TaskInfoEditMenu from "./edit-menu.svelte";
   import MultipleOptionSelector from "$lib/multiple-option-selector.svelte";
-  import { Printer, ChevronDown, ChevronUp } from "lucide-svelte";
+  import { Printer, ChevronDown, ChevronUp } from "@lucide/svelte";
   import { get_name as get_sample_name } from "$lib/sample-set-editor/sample-set-utils.ts";
   import jsPDF from "jspdf";
   import { NotoSansTC } from "$lib/NotoSansTC-Regular-normal.js";
@@ -473,13 +473,16 @@
 
             <!-- Line 3 -->
             <div class="flex flex-row flex-wrap gap-2">
-              <div class="grid max-w-[10em] gap-2">
+              <div class="grid max-w-[14em] gap-2">
                 <Label for="purging_time">Purging Time</Label>
                 <Input
                   disabled={selectedTaskInfo.length === 0}
                   id="purging_time"
                   type="datetime-local"
                   value={dateToLocalString(selectedTaskInfo[0]?.purging_time)}
+                  onclick={(e: MouseEvent) => {
+                    try { (e.target as HTMLInputElement).showPicker(); } catch {}
+                  }}
                   onchange={(e) => {
                     updateTaskInfo(e, "purging_time");
                   }}
@@ -498,13 +501,16 @@
                 ></MultipleOptionSelector>
               </div>
 
-              <div class="grid max-w-[10em] gap-2">
+              <div class="grid max-w-[14em] gap-2">
                 <Label for="sampling_time">Sampling Time</Label>
                 <Input
                   disabled={selectedTaskInfo.length === 0}
                   id="sampling_time"
                   type="datetime-local"
                   value={dateToLocalString(selectedTaskInfo[0]?.sampling_time)}
+                  onclick={(e: MouseEvent) => {
+                    try { (e.target as HTMLInputElement).showPicker(); } catch {}
+                  }}
                   onchange={(e) => {
                     updateTaskInfo(e, "sampling_time");
                   }}

@@ -10,7 +10,7 @@
   import { sharedOptions, selectedTask } from "$lib/shared-variables.svelte.ts";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { ApiClient } from "$lib/api-client.js";
-  import { PanelLeft } from "lucide-svelte";
+  import { PanelLeft } from "@lucide/svelte";
   import Button from "$lib/components/ui/button/button.svelte";
 
   let task_summary_data = $state<TaskSummary[]>([]);

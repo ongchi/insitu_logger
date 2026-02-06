@@ -2,7 +2,7 @@
   import { type TaskSummary, type SampleSet } from "$lib/types.js";
   import { sharedOptions, selectedTask } from "$lib/shared-variables.svelte.ts";
   import { formatDate } from "$lib/date-utils.ts";
-  import { Plus, Trash2, Download } from "lucide-svelte";
+  import { Plus, Trash2, Download } from "@lucide/svelte";
   import * as Popover from "$lib/components/ui/popover/index.js";
   import Button from "$lib/components/ui/button/button.svelte";
   import { buttonVariants } from "$lib/components/ui/button/index.js";
